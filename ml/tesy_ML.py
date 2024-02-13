@@ -193,4 +193,4 @@ Bike_df2=pd.DataFrame(rf_pred,columns=['rf_pred'])
 Bike_predictions=pd.merge(Bike_df1,Bike_df2,left_index=True,right_index=True)
 Bike_predictions.to_csv('Bike_Renting_Python.csv')
 Bike_predictions
-print("hello")
+print("hello world !")
