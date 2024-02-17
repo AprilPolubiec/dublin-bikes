@@ -1,4 +1,5 @@
 import sqlalchemy as db
+from sqlalchemy import create_engine, text
 import json
 
 # Opening JSON file
@@ -16,8 +17,12 @@ USER="admin"
 engine = db.create_engine("mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB), echo=True)
 print("Got engine")
 
+# engine.execute("SHOW VARIABLES;")
+# for res in result:
+#    print(res)
+
+sql_statement = text("SELECT * FROM Station;")
 with engine.connect() as conn:
-    result = conn.execute("SHOW VARIABLES;")
-    engine.close()
-    for res in result:
-        print(res)
+   result = conn.execute(sql_statement)    
+   for res in result:
+       print(res)
