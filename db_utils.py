@@ -195,7 +195,7 @@ def get_availability(station_id: str):
         rows = conn.execute(sqla.select(table).where(table.StationId == station_id))
         if len(rows) > 1:
             raise "Found more than one station with id {}".format(station_id)
-        return rows[0]
+        return AvailabilityRow(rows[0])
 
 def get_availabilities():
     availabilities = []
@@ -203,7 +203,7 @@ def get_availabilities():
         table = sqla.Table(AVAILABILITY_TABLE_NAME)
         rows = conn.execute(sqla.select(table))
         for row in rows:
-            availabilities.append(StationRow(row))
+            availabilities.append(AvailabilityRow(row))
     return availabilities
 
 def insert_station(row: StationRow):
