@@ -18,7 +18,6 @@ engine = sqla.create_engine(
     echo=True,
 )
 
-
 class DBRow:
     columns = []
     def __init__(self, table: str, id=None):
@@ -159,14 +158,12 @@ def insert_row(row: DBRow, table_name: str):
         conn.execute(sqla.insert(table), row.values())
         conn.commit()
 
-
 def update_row(row: DBRow, table_name: str):
     with engine.connect() as conn:
         id = row.Id
         table = sqla.Table(table_name)
         conn.execute(sqla.update(table).where(table.Id == id).values(row.values()))
         conn.commit()
-
 
 def delete_row(id: int, table_name: str):
     with engine.connect() as conn:
@@ -175,15 +172,46 @@ def delete_row(id: int, table_name: str):
         conn.commit()
 
 
+def get_station(station_id: str):
+    with engine.connect() as conn:
+        table = sqla.Table(STATION_TABLE_NAME)
+        rows = conn.execute(sqla.select(table).where(table.Id == station_id))
+        if len(rows) > 1:
+            raise "Found more than one station with id {}".format(station_id)
+        return rows[0]
+
+def get_stations():
+    stations = []
+    with engine.connect() as conn:
+        table = sqla.Table(STATION_TABLE_NAME)
+        rows = conn.execute(sqla.select(table))
+        for row in rows:
+            stations.append(StationRow(row))
+    return stations
+
+def get_availability(station_id: str):
+    with engine.connect() as conn:
+        table = sqla.Table(AVAILABILITY_TABLE_NAME)
+        rows = conn.execute(sqla.select(table).where(table.StationId == station_id))
+        if len(rows) > 1:
+            raise "Found more than one station with id {}".format(station_id)
+        return AvailabilityRow(rows[0])
+
+def get_availabilities():
+    availabilities = []
+    with engine.connect() as conn:
+        table = sqla.Table(AVAILABILITY_TABLE_NAME)
+        rows = conn.execute(sqla.select(table))
+        for row in rows:
+            availabilities.append(AvailabilityRow(row))
+    return availabilities
+
 def insert_station(row: StationRow):
     insert_row(row, STATION_TABLE_NAME)
-
 
 def insert_stations(rows: list[StationRow]):
     for row in rows:
         insert_station(row)
-    pass
-
 
 def update_station(row: StationRow):
     update_row(row, STATION_TABLE_NAME)
