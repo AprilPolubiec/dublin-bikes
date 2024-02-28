@@ -182,11 +182,19 @@ def get_station(station_id: str):
 
 def get_stations():
     stations = []
-    with engine.connect() as conn:
-        table = sqla.Table(STATION_TABLE_NAME)
-        rows = conn.execute(sqla.select(table))
-        for row in rows:
-            stations.append(StationRow(row))
+    csv_path = get_cache_path("StationRow")
+    if os.path.exists(csv_path):
+        print("{} exits".format(csv_path))
+        with open(csv_path, "r") as csv_file:
+            reader = csv.DictReader(csv_file)
+            for csv_row in reader:
+                stations.append(StationRow(csv_row))
+    else:
+        with engine.connect() as conn:
+            table = sqla.Table(STATION_TABLE_NAME)
+            rows = conn.execute(sqla.select(table))
+            for row in rows:
+                stations.append(StationRow(row))
     return stations
 
 def get_availability(station_id: str):
@@ -277,6 +285,7 @@ def station_rows_from_list(objs: list):
 
 def get_cache_path(row_type):
     csv_path = "data/{}_cache.csv".format(row_type)
+    print("cache path: ", csv_path)
     return csv_path
 
 
