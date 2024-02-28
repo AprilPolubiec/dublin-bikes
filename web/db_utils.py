@@ -2,10 +2,10 @@ import sqlalchemy as sqla
 import json
 import csv
 import os
-from web.utils import group_by
+from utils import group_by
 
 # Opening JSON file
-f = open("secure/credentials.json")
+f = open("../secure/credentials.json")
 data = json.load(f)
 
 URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com"

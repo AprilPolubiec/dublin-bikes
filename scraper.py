@@ -1,5 +1,5 @@
 import requests
-from db_utils import (
+from web.db_utils import (
     availability_rows_from_list,
     station_rows_from_list,
     get_updated_rows,
