@@ -1,5 +1,5 @@
 import unittest
-import utils
+import web.utils as utils
 
 class TestUtils(unittest.TestCase):
 

@@ -4,6 +4,8 @@ import db_utils as db_utils
 app = Flask(__name__)
 
 @app.route('/')
+def root():
+    return render_template('index.html')
 
 @app.route('/stations')
 def get_stations():
@@ -21,5 +23,9 @@ def get_availabilities():
 def get_availability(station_id):
     db_utils.get_availability(station_id)
 
-def index():
-    return render_template('index.html')
+@app.teardown_appcontext
+def close_connection(exception):
+    db_utils.close()
+
+if __name__ == "__main__":
+    app.run(debug=True)

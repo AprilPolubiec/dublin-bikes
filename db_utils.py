@@ -2,7 +2,7 @@ import sqlalchemy as sqla
 import json
 import csv
 import os
-from utils import group_by
+from web.utils import group_by
 
 # Opening JSON file
 f = open("secure/credentials.json")
@@ -17,6 +17,7 @@ engine = sqla.create_engine(
     "mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
     echo=True,
 )
+conn = engine.connect()
 
 class DBRow:
     columns = []
@@ -151,59 +152,54 @@ class AvailabilityRow(DBRow):
 STATION_TABLE_NAME = "Station"
 AVAILABILITY_TABLE_NAME = "Availability"
 
+def close():
+    conn.close()
 
 def insert_row(row: DBRow, table_name: str):
-    with engine.connect() as conn:
-        table = sqla.Table(table_name)
-        conn.execute(sqla.insert(table), row.values())
-        conn.commit()
+    table = sqla.Table(table_name)
+    conn.execute(sqla.insert(table), row.values())
+    conn.commit()
 
 def update_row(row: DBRow, table_name: str):
-    with engine.connect() as conn:
-        id = row.Id
-        table = sqla.Table(table_name)
-        conn.execute(sqla.update(table).where(table.Id == id).values(row.values()))
-        conn.commit()
+    id = row.Id
+    table = sqla.Table(table_name)
+    conn.execute(sqla.update(table).where(table.Id == id).values(row.values()))
+    conn.commit()
 
 def delete_row(id: int, table_name: str):
-    with engine.connect() as conn:
-        table = sqla.Table(table_name)
-        conn.execute(sqla.delete(table).where(table.Id == id))
-        conn.commit()
+    table = sqla.Table(table_name)
+    conn.execute(sqla.delete(table).where(table.Id == id))
+    conn.commit()
 
 
 def get_station(station_id: str):
-    with engine.connect() as conn:
-        table = sqla.Table(STATION_TABLE_NAME)
-        rows = conn.execute(sqla.select(table).where(table.Id == station_id))
-        if len(rows) > 1:
-            raise "Found more than one station with id {}".format(station_id)
-        return rows[0]
+    table = sqla.Table(STATION_TABLE_NAME)
+    rows = conn.execute(sqla.select(table).where(table.Id == station_id))
+    if len(rows) > 1:
+        raise "Found more than one station with id {}".format(station_id)
+    return rows[0]
 
 def get_stations():
     stations = []
-    with engine.connect() as conn:
-        table = sqla.Table(STATION_TABLE_NAME)
-        rows = conn.execute(sqla.select(table))
-        for row in rows:
-            stations.append(StationRow(row))
+    table = sqla.Table(STATION_TABLE_NAME)
+    rows = conn.execute(sqla.select(table))
+    for row in rows:
+        stations.append(StationRow(row))
     return stations
 
 def get_availability(station_id: str):
-    with engine.connect() as conn:
-        table = sqla.Table(AVAILABILITY_TABLE_NAME)
-        rows = conn.execute(sqla.select(table).where(table.StationId == station_id))
-        if len(rows) > 1:
-            raise "Found more than one station with id {}".format(station_id)
-        return AvailabilityRow(rows[0])
+    table = sqla.Table(AVAILABILITY_TABLE_NAME)
+    rows = conn.execute(sqla.select(table).where(table.StationId == station_id))
+    if len(rows) > 1:
+        raise "Found more than one station with id {}".format(station_id)
+    return AvailabilityRow(rows[0])
 
 def get_availabilities():
     availabilities = []
-    with engine.connect() as conn:
-        table = sqla.Table(AVAILABILITY_TABLE_NAME)
-        rows = conn.execute(sqla.select(table))
-        for row in rows:
-            availabilities.append(AvailabilityRow(row))
+    table = sqla.Table(AVAILABILITY_TABLE_NAME)
+    rows = conn.execute(sqla.select(table))
+    for row in rows:
+        availabilities.append(AvailabilityRow(row))
     return availabilities
 
 def insert_station(row: StationRow):
