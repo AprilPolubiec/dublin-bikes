@@ -8,7 +8,8 @@ from utils import group_by
 f = open("secure/credentials.json")
 data = json.load(f)
 
-URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com"
+URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
+URI = "127.0.0.1"
 PORT = 3306
 DB = "dublin-bikes"
 USER = "admin"
@@ -33,6 +34,11 @@ class DBRow:
             if attribute[1] != getattr(other, attribute[0]):
                 return False
         return True
+
+    def __str__(self):
+        return ', '.join([str(self.__getattribute__(column)) for column in self.columns])
+    def __repr__(self):
+        return ', '.join([str(self.__getattribute__(column)) for column in self.columns])
 
     def values(self):
         obj = {}
@@ -154,27 +160,32 @@ AVAILABILITY_TABLE_NAME = "Availability"
 
 def insert_row(row: DBRow, table_name: str):
     with engine.connect() as conn:
-        table = sqla.Table(table_name)
+        metadata = sqla.MetaData()
+        table = sqla.Table(table_name, metadata)
         conn.execute(sqla.insert(table), row.values())
         conn.commit()
 
 def update_row(row: DBRow, table_name: str):
+    print("Updating {} row: {}".format(table_name, row))
     with engine.connect() as conn:
         id = row.Id
-        table = sqla.Table(table_name)
+        metadata = sqla.MetaData()
+        table = sqla.Table(table_name, metadata)
         conn.execute(sqla.update(table).where(table.Id == id).values(row.values()))
         conn.commit()
 
 def delete_row(id: int, table_name: str):
     with engine.connect() as conn:
-        table = sqla.Table(table_name)
+        metadata = sqla.MetaData()
+        table = sqla.Table(table_name, metadata)
         conn.execute(sqla.delete(table).where(table.Id == id))
         conn.commit()
 
 
 def get_station(station_id: str):
     with engine.connect() as conn:
-        table = sqla.Table(STATION_TABLE_NAME)
+        metadata = sqla.MetaData()
+        table = sqla.Table(STATION_TABLE_NAME, metadata)
         rows = conn.execute(sqla.select(table).where(table.Id == station_id))
         if len(rows) > 1:
             raise "Found more than one station with id {}".format(station_id)
@@ -183,7 +194,8 @@ def get_station(station_id: str):
 def get_stations():
     stations = []
     with engine.connect() as conn:
-        table = sqla.Table(STATION_TABLE_NAME)
+        metadata = sqla.MetaData()
+        table = sqla.Table(STATION_TABLE_NAME, metadata)
         rows = conn.execute(sqla.select(table))
         for row in rows:
             stations.append(StationRow(row))
@@ -191,7 +203,8 @@ def get_stations():
 
 def get_availability(station_id: str):
     with engine.connect() as conn:
-        table = sqla.Table(AVAILABILITY_TABLE_NAME)
+        metadata = sqla.MetaData()
+        table = sqla.Table(AVAILABILITY_TABLE_NAME, metadata)
         rows = conn.execute(sqla.select(table).where(table.StationId == station_id))
         if len(rows) > 1:
             raise "Found more than one station with id {}".format(station_id)
@@ -200,7 +213,8 @@ def get_availability(station_id: str):
 def get_availabilities():
     availabilities = []
     with engine.connect() as conn:
-        table = sqla.Table(AVAILABILITY_TABLE_NAME)
+        metadata = sqla.MetaData()
+        table = sqla.Table(AVAILABILITY_TABLE_NAME, metadata)
         rows = conn.execute(sqla.select(table))
         for row in rows:
             availabilities.append(AvailabilityRow(row))
