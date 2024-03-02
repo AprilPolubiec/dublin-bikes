@@ -9,8 +9,12 @@ file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 f = open(file_path)
 data = json.load(f)
 
-URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
-URI = "127.0.0.1"
+DEV = os.environ["DBIKE_DEV"] == "True"
+if DEV:
+    URI = "127.0.0.1"
+else:
+    URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
+
 PORT = 3306
 DB = "dublin-bikes"
 USER = "admin"
