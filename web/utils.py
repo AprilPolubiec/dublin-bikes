@@ -1,4 +1,4 @@
-
+import decimal
 def group_by(l, key):
     """ Given a list of objects, returns as a dictionary where the key is the value passed key and the value is the
     object.
@@ -17,3 +17,8 @@ def group_by(l, key):
             raise "More than one object has the value {} for key {}".format(key_str, key)
         d[key_str] = obj
     return d
+
+def clean_type(val):
+    if isinstance(val, decimal.Decimal):
+        return float(val)
+    return val

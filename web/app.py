@@ -9,7 +9,8 @@ def root():
 
 @app.route('/stations')
 def get_stations():
-    db_utils.get_stations()
+    stations = db_utils.get_stations()
+    return stations
 
 @app.route('/stations/<int:station_id>')
 def get_station(station_id):

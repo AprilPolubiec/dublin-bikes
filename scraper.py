@@ -4,6 +4,7 @@ from web.db_utils import (
     station_rows_from_list,
     get_updated_rows,
     update_stations,
+    insert_stations,
     cache_data,
     update_availabilities,
 )
@@ -54,14 +55,15 @@ realtime_data = [
 # TODO: update get_realtime_data to return a list like the one above
 availability_rows = availability_rows_from_list(realtime_data)
 station_rows = station_rows_from_list(realtime_data)
-station_rows_to_update = get_updated_rows(station_rows)
+(station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
 print("New station data identified: ", station_rows_to_update)
 
-if len(station_rows_to_update) > 0:
-    update_stations(station_rows_to_update)
-    print("Updated stations")
-    cache_data(station_rows)
-    print("Cached stations")
+# if len(station_rows_to_update) > 0:
+#     update_stations(station_rows_to_update)
+#     print("Updated stations")
+# if len(station_rows_to_add) > 0:
+#     insert_stations(station_rows_to_add)
+#     print("Added stations")
 
-print("Updating availabilities: ", availability_rows)
-update_availabilities(availability_rows)
+# print("Updating availabilities: ", availability_rows)
+# update_availabilities(availability_rows)
