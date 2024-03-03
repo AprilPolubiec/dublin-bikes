@@ -2,6 +2,7 @@ import sqlalchemy as sqla
 import json
 import csv
 import os
+import sys
 from .utils import group_by, clean_type
 
 # Opening JSON file
@@ -13,7 +14,7 @@ DEV = os.environ["DBIKE_DEV"] == "True"
 if DEV:
     URI = "127.0.0.1"
 else:
-    URI = "dublin-bikes-db.cl020iymavvj.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
+    URI = "dublin-bikes-db.cnyo8auy4q4b.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
 
 PORT = 3306
 DB = "dublin-bikes"
@@ -163,6 +164,14 @@ def insert_row(row: DBRow, table: sqla.Table):
     conn.commit()
     return row
 
+def insert_rows(rows: list[DBRow], table: sqla.Table):
+    conn.execute(sqla.insert(table), [
+            r.values() for r in rows
+    ])
+    print("Inserting rows: {}".format(rows))
+    conn.commit()
+    return rows
+
 def update_row(row: DBRow, table: sqla.Table):
     id = row.Id
     conn.execute(sqla.update(table).where(table.c.Id == id).values(row.values()))
@@ -201,11 +210,10 @@ def insert_station(row: StationRow):
     return insert_row(row, StationRow.table)
 
 def insert_stations(rows: list[StationRow]):
-    results = []
-    for row in rows:
-        result = insert_station(row)
-        results.append(result)
-    return results
+    try:
+        return insert_rows(rows, StationRow.table)
+    except Exception as e:
+        raise "Failed to insert rows: {}".format(e)
 
 def update_station(row: StationRow) -> StationRow:
     result = update_row(row, StationRow.table)
@@ -232,13 +240,16 @@ def delete_stations(ids: list[int]) -> list[int]:
 #endregion
     
 #startregion AVAILABILITY QUERIES
-def get_availability(station_id: str, start_timestamp: int | None, end_timestamp: int | None):
+def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
+    start_timestamp = start_timestamp if start_timestamp is not None else 0
+    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
     availabilities = []
     table = AvailabilityRow.table
     rows = conn.execute(sqla.select(table)
-                        .where(table.c.StationId == station_id and 
-                               (table.c.LastUpdated >= start_timestamp or start_timestamp is None) and 
-                               (table.c.LastUpdated <= end_timestamp or end_timestamp is None)))
+                        .where(table.c.StationId == station_id)
+                        .where(table.c.LastUpdated >= start_timestamp)
+                        .where(table.c.LastUpdated <= end_timestamp)
+                    )
     for row in rows:
         availabilities.append(AvailabilityRow(row, True))
     print("Found availabilities: {}".format(availabilities))
@@ -248,18 +259,19 @@ def insert_availability(row: AvailabilityRow) -> AvailabilityRow:
     return insert_row(row, AvailabilityRow.table)
 
 def insert_availabilities(rows: list[AvailabilityRow]) -> list[AvailabilityRow]:
-    availabilities = []
-    for row in rows:
-        res = insert_availability(row)
-        availabilities.append(res)
-    return availabilities
+    try:
+        return insert_rows(rows, AvailabilityRow.table)
+    except Exception as e:
+        raise "Failed to insert rows: {}".format(e)
 
 def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: int):
+    start_timestamp = start_timestamp if start_timestamp is not None else 0
+    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
     table = AvailabilityRow.table
     result = conn.execute(sqla.delete(AvailabilityRow.table)
-                          .where(table.c.StationId == station_id and 
-                                 table.c.LastUpdated >= start_timestamp and 
-                                 table.c.LastUpdated <= end_timestamp))
+                          .where((table.c.StationId == station_id) & 
+                                 (table.c.LastUpdated >= start_timestamp) & 
+                                 (table.c.LastUpdated <= end_timestamp)))
     conn.commit()
     print("Deleted rows: {}".format(result.rowcount))
     return result.rowcount
