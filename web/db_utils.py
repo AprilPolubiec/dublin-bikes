@@ -26,7 +26,6 @@ engine = sqla.create_engine(
 )
 caching_enabled = True
 print("Starting connection...")
-print("mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB))
 conn = engine.connect()
 
 class DBRow:
@@ -155,7 +154,7 @@ def disable_caching():
 
 def enable_caching():
     global caching_enabled
-    caching_enabled = False
+    caching_enabled = True
 
 #startregion DB FUNCTIONS
 def insert_row(row: DBRow, table: sqla.Table):
