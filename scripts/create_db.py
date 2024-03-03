@@ -49,6 +49,7 @@ if create_station == "y":
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS Station"))
         conn.execute(sqla.text(sql))
+        conn.commit()
         print("Station table created successfully \u2764")
     except:
         raise "Failed to create Station table"
@@ -66,12 +67,14 @@ if create_availability == "y":
             MechanicalBikesAvailable INT NULL,
             ElectricBikesAvailable INT NULL,
             StandsAvailable INT NULL,
-            LastUpdated INT NULL,
-            PRIMARY KEY (StationId));
+            LastUpdated INT NOT NULL,
+            PRIMARY KEY (StationId, LastUpdated));
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS Availability"))
         conn.execute(sqla.text(sql))
+        conn.commit()
         print("Availability table created successfully \u2764")
     except:
         raise "Failed to create Availability table"
 
+conn.close()
