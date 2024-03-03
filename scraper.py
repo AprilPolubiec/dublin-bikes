@@ -5,8 +5,7 @@ from web.db_utils import (
     get_updated_rows,
     update_stations,
     insert_stations,
-    cache_data,
-    update_availabilities,
+    insert_availabilities,
 )
 import json
 
@@ -31,8 +30,6 @@ def get_realtime_data():
 
 # Query data from JCDecaux
 realtime_data = get_realtime_data()
-# print("Got realtime data: ", realtime_data)
-
 
 realtime_data = [
     {
@@ -58,12 +55,12 @@ station_rows = station_rows_from_list(realtime_data)
 (station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
 print("New station data identified: ", station_rows_to_update)
 
-# if len(station_rows_to_update) > 0:
-#     update_stations(station_rows_to_update)
-#     print("Updated stations")
-# if len(station_rows_to_add) > 0:
-#     insert_stations(station_rows_to_add)
-#     print("Added stations")
+if len(station_rows_to_update) > 0:
+    update_stations(station_rows_to_update)
+    print("Updated stations")
+if len(station_rows_to_add) > 0:
+    insert_stations(station_rows_to_add)
+    print("Added stations")
 
-# print("Updating availabilities: ", availability_rows)
-# update_availabilities(availability_rows)
+print("Inserting availabilities: ", availability_rows)
+insert_availabilities(availability_rows)
