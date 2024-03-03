@@ -2,7 +2,10 @@ import unittest
 from random import randrange
 from copy import deepcopy
 from web.db_utils import *
+# WARNING: these currently run on our production database which is NOT ideal! Be very careful when running tests so they don't leave behind data
+# or delete data we need.
 
+# TODO: create a development DB (out of scope for assignment right now)
 class TestStationDBUtils(unittest.TestCase):
     filtered_api_response = {
             "number": 999,
@@ -235,6 +238,9 @@ class TestAvailabilityDBUtils(unittest.TestCase):
     
         availability_rows = get_availability(availability.StationId, None, 1400)
         self.assertEqual(len(availability_rows), 3)
+
+    def test_caching(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
