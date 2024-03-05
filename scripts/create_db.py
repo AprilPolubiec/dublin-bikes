@@ -27,12 +27,12 @@ try:
 except:
     raise "Failed to connect to db: mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB)
 
-create_station = ""
+confirm_create_station = ""
 
-while create_station != "y" and create_station != "n":
-    create_station = input("Would you like to create a new Station table? If one already exists, it will be deleted and overwritten. y/n: ")
+while confirm_create_station != data["DB_PASSWORD"]:
+    confirm_create_station = input("You are about to create a new Station table which will delete existing Station table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
 
-if create_station == "y":
+if confirm_create_station == "y":
     try:
         sql = """
             CREATE TABLE Station (
@@ -54,11 +54,12 @@ if create_station == "y":
     except:
         raise "Failed to create Station table"
 
-create_availability = ""
-while create_availability != "y" and create_availability != "n":
-    create_availability = input("Would you like to create a new Availability table? If one already exists, it will be deleted and overwritten. y/n: ")
+confirm_create_availability = ""
 
-if create_availability == "y":
+while confirm_create_availability != data["DB_PASSWORD"]:
+    confirm_create_availability = input("You are about to create a new Availability table which will delete existing Availability table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
+
+if confirm_create_availability == "y":
     try:
         sql = """
             CREATE TABLE Availability (
@@ -76,5 +77,29 @@ if create_availability == "y":
         print("Availability table created successfully \u2764")
     except:
         raise "Failed to create Availability table"
+
+# confirm_create_current_weather = ""
+
+# while confirm_create_current_weather != data["DB_PASSWORD"]:
+#     confirm_create_current_weather = input("You are about to create a new Current Weather table which will delete existing Current Weather table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
+
+# if confirm_create_current_weather == "y":
+#     try:
+#         sql = """
+#             CREATE TABLE Availability (
+#             StationId INT NOT NULL,
+#             Status VARCHAR(45) NULL,
+#             MechanicalBikesAvailable INT NULL,
+#             ElectricBikesAvailable INT NULL,
+#             StandsAvailable INT NULL,
+#             LastUpdated INT NOT NULL,
+#             PRIMARY KEY (StationId, LastUpdated));
+#         """
+#         conn.execute(sqla.text("DROP TABLE IF EXISTS Availability"))
+#         conn.execute(sqla.text(sql))
+#         conn.commit()
+#         print("Availability table created successfully \u2764")
+#     except:
+#         raise "Failed to create Availability table"
 
 conn.close()
