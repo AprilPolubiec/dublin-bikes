@@ -8,6 +8,7 @@ from web.db_utils import (
     insert_availabilities,
 )
 import json
+from datetime import datetime
 
 
 def get_realtime_data():
@@ -23,7 +24,28 @@ def get_realtime_data():
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        print("Got data: ", response.json())
+        stations = []
+        for d in data:
+            station_data = {
+                "number": d["number"],
+                "name": d["name"],
+                "latitude": d["position"]["latitude"],
+                "longitude": d["position"]["longitude"],
+                "address": d["address"],
+                "zip": "000000", # TODO: remove
+                "city": "Dublin",
+                "accepts_cards": d["banking"],
+                "total_stands": d["totalStands"]["capacity"],
+                "status": d["status"],
+                "mechanical_available": d["totalStands"]["availabilities"]["mechanicalBikes"],
+                "electric_available": d["totalStands"]["availabilities"]["electricalBikes"],
+                "stands_available": d["totalStands"]["availabilities"]["stands"],
+                "last_updated": int(datetime.fromisoformat(d["lastUpdate"][:-1]).timestamp()),
+            }
+            stations.append(station_data)
+        return stations
     else:
         print("Failed to fetch data from the API. Status code:", response.status_code)
 
@@ -31,36 +53,17 @@ def get_realtime_data():
 # Query data from JCDecaux
 realtime_data = get_realtime_data()
 
-realtime_data = [
-    {
-        "number": 1,
-        "name": "Aprils Stand New Name",
-        "latitude": 123,
-        "longitude": 456,
-        "address": "Main St",
-        "zip": "D9ghwf",
-        "city": "Dublin",
-        "accepts_cards": True,
-        "total_stands": 100,
-        "status": "OPEN",
-        "mechanical_available": 10,
-        "electric_available": 5,
-        "stands_available": 5,
-        "last_updated": 9372934,
-    }
-]
-# TODO: update get_realtime_data to return a list like the one above
 availability_rows = availability_rows_from_list(realtime_data)
 station_rows = station_rows_from_list(realtime_data)
-(station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
-print("New station data identified: ", station_rows_to_update)
+# (station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
+# print("New station data identified: ", station_rows_to_update)
 
-if len(station_rows_to_update) > 0:
-    update_stations(station_rows_to_update)
-    print("Updated stations")
-if len(station_rows_to_add) > 0:
-    insert_stations(station_rows_to_add)
-    print("Added stations")
+# if len(station_rows_to_update) > 0:
+#     update_stations(station_rows_to_update)
+#     print("Updated stations")
+# if len(station_rows_to_add) > 0:
+#     insert_stations(station_rows_to_add)
+#     print("Added stations")
 
 print("Inserting availabilities: ", availability_rows)
 insert_availabilities(availability_rows)
