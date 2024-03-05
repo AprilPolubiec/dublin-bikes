@@ -1,26 +1,35 @@
 
 import requests
+import json
 
-def get_weather_data(latitude, longitude, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        print("Failed to fetch data.")
-        return None
-
+# Replace 'YOUR_API_KEY' with your actual API key
+api_key = 'f9ac1e6b527fcf1a4b08d54ef9419527'
+city = 'Dublin'
 latitude = 53.3498
-longitude = 6.2603
-api_key = "YOUR_API_KEY"  # Replace "YOUR_API_KEY" with your actual API key from OpenWeatherMap
+longitude = -6.2672
+url = f'https://api.openweathermap.org/data/2.5/weather'
 
-# weather_data = get_weather_data(latitude, longitude, api_key)
-# if weather_data:
-#     print(weather_data)
+f = open("secure/credentials.json")
+data = json.load(f)
+W_API = data["W_API"]
 
-codes = get_weather_data(53.3498, 6.2603, "730dd6087a1a7062c59f120c2ada380e9a7c32e4")
-latitude = 53.3498
-longitude = 6.2603
+# Make the API request
+response = requests.get(url, params={"units":"metric", "lat": latitude, "lon":longitude, "appid":W_API})
 
-# 53.3498° N, 6.2603° W of dublin 
+# Check if request was successful
+if response.status_code == 200:
+    # Parse JSON response
+    data = response.json()
+    
+    # Extract relevant weather information
+    temperature = data['main']['temp']
+    humidity = data['main']['humidity']
+    wind_speed = data['wind']['speed']
+    
+    # Print weather information
+    print(f'Weather in {city}:')
+    print(f'Temperature: {temperature} K')
+    print(f'Humidity: {humidity}%')
+    print(f'Wind Speed: {wind_speed} m/s')
+else:
+    print('Failed to retrieve weather data')
