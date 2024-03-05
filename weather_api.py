@@ -3,7 +3,6 @@ import requests
 import json
 
 # Replace 'YOUR_API_KEY' with your actual API key
-api_key = 'f9ac1e6b527fcf1a4b08d54ef9419527'
 city = 'Dublin'
 latitude = 53.3498
 longitude = -6.2672
