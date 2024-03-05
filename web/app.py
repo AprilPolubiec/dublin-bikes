@@ -1,11 +1,17 @@
 from flask import Flask, render_template
 import web.db_utils as db_utils
+import os
+import json
 
 app = Flask(__name__)
 
 @app.route('/')
 def root():
-    return render_template('index.html')
+    file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secure/credentials.json")
+    f = open(file_path)
+    data = json.load(f)
+    api_key = data["GOOGLE_MAPS_KEY"]
+    return render_template('index.html', apiKey=api_key)
 
 @app.route('/stations')
 def get_stations():
@@ -20,7 +26,7 @@ def get_station(station_id):
 def get_availabilities():
     db_utils.get_availabilities()
 
-@app.route('/availability/<int:station_id>/)
+@app.route('/availability/<int:station_id>/')
 def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
     db_utils.get_availability(station_id, start_time, end_time)
 

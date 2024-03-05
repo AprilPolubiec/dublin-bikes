@@ -4,10 +4,6 @@
   <head>
     <title>Simple Marker</title>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
-    <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZ98fwTGvjaUu-a2pFBnd61ui-dQ6oT30&callback=initMap&v=weekly"
-    defer
-  ></script>
     <style>
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -26,5 +22,9 @@
   </head>
   <body>
     <div id="map"></div>
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&callback=initMap&v=weekly"
+    defer
+  ></script>
   </body>
 </html>
