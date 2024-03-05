@@ -1,0 +1,40 @@
+{
+    "number": 123,
+    "contractName" : "Lyon",
+    "name": "nom station",
+    "address": "adresse indicative",
+    "position": {
+      "latitude": 45.774204,
+      "longitude": 4.867512
+    },
+    "banking": true,
+    "bonus": false,
+    "status": "OPEN",
+    "lastUpdate": "2019-04-08T12:23:34Z",
+    "connected": true,
+    "overflow": true,
+    "shape": null,
+    "totalStands": {
+      "availabilities": {
+        "bikes": 15,
+        "stands": 7,
+        "mechanicalBikes": 10,
+        "electricalBikes": 5,
+        "electricalInternalBatteryBikes": 0,
+        "electricalRemovableBatteryBikes": 5    
+      },
+      "capacity": 40
+    },
+    "mainStands": {
+      "availabilities": {
+        "bikes": 15,
+        "stands": 7,
+        "mechanicalBikes": 10,
+        "electricalBikes": 5,
+        "electricalInternalBatteryBikes": 0,
+        "electricalRemovableBatteryBikes": 5    
+      },
+      "capacity": 40
+    },
+    "overflowStands": null
+  }
