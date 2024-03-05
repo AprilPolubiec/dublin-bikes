@@ -24,11 +24,14 @@ if response.status_code == 200:
     temperature = data['main']['temp']
     humidity = data['main']['humidity']
     wind_speed = data['wind']['speed']
-    
+    rain = data['weather'][0]['description']
+
+
     # Print weather information
     print(f'Weather in {city}:')
     print(f'Temperature: {temperature} K')
     print(f'Humidity: {humidity}%')
     print(f'Wind Speed: {wind_speed} m/s')
+    print(f'Forecast: {rain}')
 else:
     print('Failed to retrieve weather data')
