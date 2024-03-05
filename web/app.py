@@ -30,9 +30,9 @@ def get_availabilities():
 def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
     db_utils.get_availability(station_id, start_time, end_time)
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db_utils.close()
+# @app.teardown_appcontext
+# def close_connection(exception):
+#     db_utils.close()
 
 if __name__ == "__main__":
     app.run(debug=True)
