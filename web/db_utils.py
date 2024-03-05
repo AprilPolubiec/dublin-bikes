@@ -200,7 +200,7 @@ def get_stations():
     rows = conn.execute(stmnt)
     
     for row in rows:
-        station = StationRow(list(row), is_row=True) # Convert the list into a StationRow instance
+        station = StationRow(list(row), is_row=True).values() # Convert the list into a StationRow instance
         stations.append(station)
     print("Found stations: {}".format(stations))
     return stations
