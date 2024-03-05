@@ -29,8 +29,8 @@ except:
 
 confirm_create_station = ""
 
-while confirm_create_station != data["DB_PASSWORD"]:
-    confirm_create_station = input("You are about to create a new Station table which will delete existing Station table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
+while confirm_create_station != data["DB_PASSWORD"] and confirm_create_station != 'pass':
+    confirm_create_station = input("You are about to create a new Station table which will delete existing Station table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
 if confirm_create_station == "y":
     try:
@@ -56,8 +56,8 @@ if confirm_create_station == "y":
 
 confirm_create_availability = ""
 
-while confirm_create_availability != data["DB_PASSWORD"]:
-    confirm_create_availability = input("You are about to create a new Availability table which will delete existing Availability table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
+while confirm_create_availability != data["DB_PASSWORD"] and confirm_create_availability != "pass":
+    confirm_create_availability = input("You are about to create a new Availability table which will delete existing Availability table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
 if confirm_create_availability == "y":
     try:
@@ -77,29 +77,5 @@ if confirm_create_availability == "y":
         print("Availability table created successfully \u2764")
     except:
         raise "Failed to create Availability table"
-
-# confirm_create_current_weather = ""
-
-# while confirm_create_current_weather != data["DB_PASSWORD"]:
-#     confirm_create_current_weather = input("You are about to create a new Current Weather table which will delete existing Current Weather table if it exists. If you are sure you want to do this, enter the DB password to proceed: ")
-
-# if confirm_create_current_weather == "y":
-#     try:
-#         sql = """
-#             CREATE TABLE Availability (
-#             StationId INT NOT NULL,
-#             Status VARCHAR(45) NULL,
-#             MechanicalBikesAvailable INT NULL,
-#             ElectricBikesAvailable INT NULL,
-#             StandsAvailable INT NULL,
-#             LastUpdated INT NOT NULL,
-#             PRIMARY KEY (StationId, LastUpdated));
-#         """
-#         conn.execute(sqla.text("DROP TABLE IF EXISTS Availability"))
-#         conn.execute(sqla.text(sql))
-#         conn.commit()
-#         print("Availability table created successfully \u2764")
-#     except:
-#         raise "Failed to create Availability table"
 
 conn.close()
