@@ -31,8 +31,8 @@ def get_realtime_data():
             station_data = {
                 "number": d["number"],
                 "name": d["name"],
-                "latitude": d["position"]["latitude"],
-                "longitude": d["position"]["longitude"],
+                "latitude": d["position"]["latitude"], # TODO: the DB is cutting off the decimal - fix
+                "longitude": d["position"]["longitude"], # TODO: the DB is cutting off the decimal - fix
                 "address": d["address"],
                 "zip": "000000", # TODO: remove
                 "city": "Dublin",
@@ -42,7 +42,7 @@ def get_realtime_data():
                 "mechanical_available": d["totalStands"]["availabilities"]["mechanicalBikes"],
                 "electric_available": d["totalStands"]["availabilities"]["electricalBikes"],
                 "stands_available": d["totalStands"]["availabilities"]["stands"],
-                "last_updated": int(datetime.fromisoformat(d["lastUpdate"][:-1]).timestamp()),
+                "last_updated": d["lastUpdate"],
             }
             stations.append(station_data)
         return stations

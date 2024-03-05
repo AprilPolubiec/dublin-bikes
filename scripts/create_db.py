@@ -32,7 +32,7 @@ confirm_create_station = ""
 while confirm_create_station != data["DB_PASSWORD"] and confirm_create_station != 'pass':
     confirm_create_station = input("You are about to create a new Station table which will delete existing Station table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
-if confirm_create_station == "y":
+if confirm_create_station == data["DB_PASSWORD"]:
     try:
         sql = """
             CREATE TABLE Station (
@@ -59,7 +59,7 @@ confirm_create_availability = ""
 while confirm_create_availability != data["DB_PASSWORD"] and confirm_create_availability != "pass":
     confirm_create_availability = input("You are about to create a new Availability table which will delete existing Availability table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
-if confirm_create_availability == "y":
+if confirm_create_availability == data["DB_PASSWORD"]:
     try:
         sql = """
             CREATE TABLE Availability (
@@ -68,7 +68,7 @@ if confirm_create_availability == "y":
             MechanicalBikesAvailable INT NULL,
             ElectricBikesAvailable INT NULL,
             StandsAvailable INT NULL,
-            LastUpdated INT NOT NULL,
+            LastUpdated VARCHAR(45) NOT NULL,
             PRIMARY KEY (StationId, LastUpdated));
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS Availability"))
