@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-import db_utils as db_utils
+import web.db_utils as db_utils
 
 app = Flask(__name__)
 
@@ -20,9 +20,9 @@ def get_station(station_id):
 def get_availabilities():
     db_utils.get_availabilities()
 
-@app.route('/availability/<int:station_id>')
-def get_availability(station_id):
-    db_utils.get_availability(station_id)
+@app.route('/availability/<int:station_id>/)
+def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
+    db_utils.get_availability(station_id, start_time, end_time)
 
 @app.teardown_appcontext
 def close_connection(exception):

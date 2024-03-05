@@ -1,3 +1,5 @@
+import { getAvailability, getStation } from './db_queries.js';
+
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
