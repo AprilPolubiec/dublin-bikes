@@ -11,7 +11,7 @@
       <!-- TODO: make smaller -->
       <nav>
         <ul>
-          <li><strong>Acme Corp</strong></li>
+          <li><strong>Bike Finder</strong></li>
         </ul>
         <ul>
           <li><a href="#" class="contrast">About</a></li>
@@ -26,12 +26,11 @@
       <div id="content">
         <div class="container left" id="sidebar">
           <div id="search-panel">
-            <h2>Find Bike Stations</h2>
             <form id="search-form">
               <fieldset>
                 <!-- TODO: placeholders -->
-                  <input type="search" id="start-location" name="start-location" required /> 
-                  <input type="search" id="end-location" name="end-location" required />
+                <input type="search" placeholder="From..." id="start-location" name="start-location" required />
+                <input type="search" placeholder="To..." id="end-location" name="end-location" required />
                 <label for="departure-time"
                   >Departure Time:
                   <input type="datetime-local" id="departure-time" name="departure-time" required />
@@ -42,22 +41,27 @@
           </div>
 
           <div id="results">
-            <h2>Route Options</h2>
-              <details><div id="leg1Panel"></div></details>
-              <div id="leg2Panel"></div>
-              <div id="leg3Panel"></div>
-              <!-- <details open>
+            <h5>Suggested Route</h5>
+            <div id="leg1Panel"></div>
+            <div id="leg2Panel"></div>
+            <div id="leg3Panel"></div>
+            <!-- <details>
+                <summary>Route 1</summary>
+                <div id="leg1Panel"></div>
+              </details> -->
+
+            <!-- <details open>
                 <summary>Route</summary>
                 <div id="directionsPanel"></div>
               </details> -->
-              <span aria-busy="true">Generating your link...</span>
-              <progress></progress>
-              <!-- TODO modals https://picocss.com/docs/modal -->
+            <!-- <span aria-busy="true">Generating your link...</span>
+              <progress></progress> -->
+            <!-- TODO modals https://picocss.com/docs/modal -->
           </div>
         </div>
         <div class="container right" id="map"></div>
       </div>
     </main>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&libraries=places,geometry&callback=initMap&v=weekly" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&libraries=places,geometry,marker&callback=initMap&v=weekly" defer></script>
   </body>
 </html>

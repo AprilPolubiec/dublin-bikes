@@ -38,12 +38,15 @@ async function initMap() {
     const stations = await getStations();
     for (const station of stations) {
         const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude))
+
         const marker = new google.maps.Marker({
             position,
             map,
             title: station.Name,
+            fillColor: "#99ff33"
         });
-
+// TODO: clustering https://developers.google.com/maps/documentation/javascript/examples/marker-clustering
+// TODO: use advanced markers
         const contentString =
             '<div class="infowindow-content">' +
             "<p><b>Availability: </b> 0 " +
@@ -89,7 +92,7 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   console.log(e, start_location, end_location)
   const start_place = start_location.getPlace();
   const end_place = end_location.getPlace();
- 
+//  TODO: make these take over the entire nav and add a back button to go back to the search
   const closest_start_station = getClosestStation(start_place.geometry.location, stations)
   const closest_end_station = getClosestStation(end_place.geometry.location, stations)
   // const closest_start_station = {lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude)}
@@ -98,7 +101,7 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   const firstLegRenderer = new google.maps.DirectionsRenderer( {
     map: map,
     preserveViewport: true,
-    suppressMarkers: true,
+    // suppressMarkers: true,
     polylineOptions: {
       strokeColor: 'red'
     }});
@@ -122,7 +125,7 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   const secondLegRenderer = new google.maps.DirectionsRenderer(new google.maps.DirectionsRenderer( {
     map: map,
     preserveViewport: true,
-    suppressMarkers: true,
+    // suppressMarkers: true,
     polylineOptions: {
       strokeColor: 'blue'
     }}));
@@ -146,7 +149,7 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   const thirdLegRenderer = new google.maps.DirectionsRenderer(new google.maps.DirectionsRenderer( {
     map: map,
     preserveViewport: true,
-    suppressMarkers: true,
+    // suppressMarkers: true,
     polylineOptions: {
       strokeColor: 'red'
     }}));
