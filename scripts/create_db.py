@@ -38,8 +38,8 @@ if confirm_create_station == data["DB_PASSWORD"]:
             CREATE TABLE Station (
             Id INT NOT NULL,
             Name VARCHAR(45) NULL,
-            PositionLatitude DECIMAL(6) NULL,
-            PositionLongitude DECIMAL(6) NULL,
+            PositionLatitude VARCHAR(45) NULL,
+            PositionLongitude VARCHAR(45) NULL,
             Address VARCHAR(45) NULL,
             ZipCode VARCHAR(45) NULL,
             City VARCHAR(45) NULL,
