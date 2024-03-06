@@ -20,12 +20,12 @@ USER = "admin"
 
 try:
     engine = sqla.create_engine(
-        "mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
+        "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
         echo=True,
     )
     conn = engine.connect()
 except:
-    raise "Failed to connect to db: mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB)
+    raise Exception("mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB))
 
 confirm_create_station = ""
 
