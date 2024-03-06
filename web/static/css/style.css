@@ -43,4 +43,10 @@ body {
 #search-form {
     margin: 1rem;
 }
+
+#map [role=button], #map [type=button],
+#map [role=button]:hover, #map [type=button]:hover {
+    background-color: unset!important;
+    border: unset!important;
+}
 /* END SECTION */
