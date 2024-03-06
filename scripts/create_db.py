@@ -20,12 +20,12 @@ USER = "admin"
 
 try:
     engine = sqla.create_engine(
-        "mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
+        "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
         echo=True,
     )
     conn = engine.connect()
 except:
-    raise "Failed to connect to db: mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB)
+    raise Exception("mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB))
 
 confirm_create_station = ""
 
@@ -111,5 +111,35 @@ if confirm_create_current_weather == data["DB_PASSWORD"]:
     except:
         raise "Failed to create current table"
 
+confirm_create_daily_weather = ""
+while confirm_create_daily_weather != data["DB_PASSWORD"] and confirm_create_daily_weather != "pass":
+    confirm_create_daily_weather = input("You are about to create a new DailyWeather table which will delete existing DailyWeather table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
+
+if confirm_create_daily_weather == data["DB_PASSWORD"]:
+    try:
+        sql = """
+            CREATE TABLE DailyWeather (
+                DateTime DATETIME NOT NULL,
+                FutureDate DATETIME NOT NULL,
+                Humidity INTEGER,
+                Pop FLOAT,
+                Pressure INTEGER,
+                TemperatureMax FLOAT,
+                TemperatureMin FLOAT,
+                UVI FLOAT,
+                WeatherId INTEGER,
+                WindSpeed FLOAT,
+                WindGust FLOAT,
+                Rain FLOAT,
+                Snow FLOAT,
+                PRIMARY KEY (DateTime, FutureDate)
+                )
+        """
+        conn.execute(sqla.text("DROP TABLE IF EXISTS DailyWeather"))
+        conn.execute(sqla.text(sql))
+        conn.commit()
+        print("DailyWeather table created successfully \u2764")
+    except:
+        raise "Failed to create current table"
 
 conn.close()

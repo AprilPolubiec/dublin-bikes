@@ -1,26 +1,44 @@
-
 import requests
+import json
 
-def get_weather_data(latitude, longitude, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
-    response = requests.get(url)
+def get_weather():
+    city = 'Dublin'
+    latitude = 53.3498
+    longitude = -6.2672
+    url = 'https://api.openweathermap.org/data/2.5/weather'
+
+    # Load API key from credentials file
+    with open("secure/credentials.json") as f:
+        data = json.load(f)
+        W_API = data["W_API"]
+
+    # Make the API request
+    response = requests.get(url, params={"units": "metric", "lat": latitude, "lon": longitude, "appid": W_API})
+
+    # Check if request was successful
     if response.status_code == 200:
+        # Parse JSON response
         data = response.json()
-        return data
+
+        # Extract relevant weather information
+        temperature = data['main']['temp']
+        humidity = data['main']['humidity']
+        wind_speed = data['wind']['speed']
+        rain = data['weather'][0]['description']
+
+        # Print weather information
+        print(f'Weather in {city}:')
+        print(f'Temperature: {temperature} °C')
+        print(f'Humidity: {humidity}%')
+        print(f'Wind Speed: {wind_speed} m/s')
+        print(f'Forecast: {rain}')
     else:
-        print("Failed to fetch data.")
-        return None
+        print('Failed to retrieve weather data')
 
-latitude = 53.3498
-longitude = 6.2603
-api_key = "YOUR_API_KEY"  # Replace "YOUR_API_KEY" with your actual API key from OpenWeatherMap
+# Call the function to get weather information
+get_weather()
 
-# weather_data = get_weather_data(latitude, longitude, api_key)
-# if weather_data:
-#     print(weather_data)
-
-codes = get_weather_data(53.3498, 6.2603, "730dd6087a1a7062c59f120c2ada380e9a7c32e4")
-latitude = 53.3498
-longitude = 6.2603
-
-# 53.3498° N, 6.2603° W of dublin 
+# great job!! last thing to do is wrap all of this code into a function that we can call in our scraper script. So like
+#     def get_weather():
+#   ## All the code here
+    # That way in our scraper script we can call "get_weather()" - message me if you have questions!!
