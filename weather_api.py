@@ -1,7 +1,3 @@
-
-import requests
-import json
-
 import requests
 import json
 
@@ -39,10 +35,4 @@ def get_weather():
     else:
         print('Failed to retrieve weather data')
 
-# Call the function to get weather information
-get_weather()
 
-# great job!! last thing to do is wrap all of this code into a function that we can call in our scraper script. So like
-#     def get_weather():
-#   ## All the code here
-    # That way in our scraper script we can call "get_weather()" - message me if you have questions!!
