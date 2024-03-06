@@ -1,4 +1,5 @@
 secure/*
 .DS_Store
 .ipynb_checkpoints/
+logs.txt
 *__pycache__*
