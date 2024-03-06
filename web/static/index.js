@@ -12,13 +12,29 @@ async function initMap() {
 
     const stations = await getStations();
     for (const station of stations) {
-        const lat = station.PositionLatitude;
-        const lng = station.PositionLongitude;
-        new google.maps.Marker({
+        const lat = parseFloat(station.PositionLatitude);
+        const lng = parseFloat(station.PositionLongitude);
+        const marker = new google.maps.Marker({
             position: { lat, lng },
             map,
             title: station.Name,
         });
+
+        // const contentString =
+        //     '<div id="bodyContent">' +
+        //     "<p><b>Availability: </b> 0 " +
+        //     "</div>";
+      // const infowindow = new google.maps.InfoWindow({
+      //   content: contentString,
+      //   ariaLabel: station.Name,
+      // });
+
+      // marker.addListener("click", () => {
+      //   infowindow.open({
+      //     anchor: marker,
+      //     map,
+      //   });
+      // });
     }
 
 }
