@@ -9,10 +9,13 @@ from web.db_utils import (
 )
 import json
 from datetime import datetime
-
+import os
 
 def get_realtime_data():
-    f = open("secure/credentials.json")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    credentials_path = os.path.join(script_dir, 'secure', 'credentials.json')
+
+    f = open(credentials_path)
     data = json.load(f)
     # real-time data url
     url = "https://api.jcdecaux.com/vls/v3/stations?apiKey={}&contract={}".format(
