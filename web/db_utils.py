@@ -21,7 +21,7 @@ DB = "dublin-bikes"
 USER = "admin"
 
 engine = sqla.create_engine(
-    "mysql+mysqldb://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
+    "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
     echo=True,
 )
 caching_enabled = True
