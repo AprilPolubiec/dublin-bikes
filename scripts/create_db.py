@@ -82,32 +82,32 @@ if confirm_create_availability == data["DB_PASSWORD"]:
 confirm_create_current_weather = ""
 
 while confirm_create_current_weather != data["DB_PASSWORD"] and confirm_create_current_weather != "pass":
-    confirm_create_current_weather = input("You are about to create a new Availability table which will delete existing Availability table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
+    confirm_create_current_weather = input("You are about to create a new CurrentWeather table which will delete existing CurrentWeather table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
 if confirm_create_current_weather == data["DB_PASSWORD"]:
     try:
         sql = """
-        CREATE TABLE current (
-            dt DATETIME NOT NULL,
-            feels_like FLOAT,
-            humidity INTEGER,
-            pressure INTEGER,
-            sunrise DATETIME,
-            sunset DATETIME,
-            "temp" FLOAT,
-            uvi FLOAT,
-            weather_id INTEGER,
-            wind_gust FLOAT,
-            wind_speed FLOAT,
-            rain_1h FLOAT,
-            snow_1h FLOAT,
-            PRIMARY KEY (dt)
-            )
+            CREATE TABLE CurrentWeather (
+                DateTime DATETIME NOT NULL,
+                FeelsLike FLOAT,
+                Humidity INTEGER,
+                Pressure INTEGER,
+                Sunrise DATETIME,
+                Sunset DATETIME,
+                Temperature FLOAT,
+                UVI FLOAT,
+                WeatherId INTEGER,
+                WindGust FLOAT,
+                WindSpeed FLOAT,
+                Rain1h FLOAT,
+                Snow1h FLOAT,
+                PRIMARY KEY (DateTime)
+                )
         """
-        conn.execute(sqla.text("DROP TABLE IF EXISTS current"))
+        conn.execute(sqla.text("DROP TABLE IF EXISTS CurrentWeather"))
         conn.execute(sqla.text(sql))
         conn.commit()
-        print("current table created successfully \u2764")
+        print("CurrentWeather table created successfully \u2764")
     except:
         raise "Failed to create current table"
 
