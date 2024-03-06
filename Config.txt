@@ -1,0 +1,23 @@
+# database
+URL =
+PORT = 3306
+DB = dublin-bikes
+USER = admin
+PASSWORD =
+
+# Bike stations
+STATIONS =
+NAME = dublin
+APIKEY = 
+
+# Weather
+APIWLink =
+APIWKEY = 
+
+
+
+# Flask
+# the host that flask will be exposed to
+FLASK_HOST = 0.0.0.0
+# change to your local path
+MODEL_PATH = /home/ubuntu/model/
