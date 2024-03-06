@@ -111,5 +111,34 @@ if confirm_create_current_weather == data["DB_PASSWORD"]:
     except:
         raise "Failed to create current table"
 
+while confirm_create_daily_weather != data["DB_PASSWORD"] and confirm_create_daily_weather != "pass":
+    confirm_create_daily_weather = input("You are about to create a new DailyWeather table which will delete existing DailyWeather table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
+
+if confirm_create_daily_weather == data["DB_PASSWORD"]:
+    try:
+        sql = """
+            CREATE TABLE DailyWeather (
+                dt DATETIME NOT NULL,
+                future_dt DATETIME NOT NULL,
+                humidity INTEGER,
+                pop FLOAT,
+                pressure INTEGER,
+                temp_max FLOAT,
+                temp_min FLOAT,
+                uvi FLOAT,
+                weather_id INTEGER,
+                wind_speed FLOAT,
+                wind_gust FLOAT,
+                rain FLOAT,
+                snow FLOAT,
+                PRIMARY KEY (dt, future_dt)
+                )
+        """
+        conn.execute(sqla.text("DROP TABLE IF EXISTS DailyWeather"))
+        conn.execute(sqla.text(sql))
+        conn.commit()
+        print("DailyWeather table created successfully \u2764")
+    except:
+        raise "Failed to create current table"
 
 conn.close()
