@@ -8,6 +8,7 @@
   </head>
   <body>
     <main class="container-fluid">
+      <!-- TODO: make smaller -->
       <nav>
         <ul>
           <li><strong>Acme Corp</strong></li>
@@ -28,15 +29,9 @@
             <h2>Find Bike Stations</h2>
             <form id="search-form">
               <fieldset>
-                <label for="start-location"
-                  >Start Location:
-                  <input type="search" id="start-location" name="start-location" required />
-                </label>
-                <label for="end-location"
-                  >End Location:
+                <!-- TODO: placeholders -->
+                  <input type="search" id="start-location" name="start-location" required /> 
                   <input type="search" id="end-location" name="end-location" required />
-                </label>
-                <!-- <small>Litter kitter kitty litty little kitten big roar roar feed me</small> -->
                 <label for="departure-time"
                   >Departure Time:
                   <input type="datetime-local" id="departure-time" name="departure-time" required />
@@ -48,37 +43,21 @@
 
           <div id="results">
             <h2>Route Options</h2>
-            <div id="filter-icon"><img src="filter-icon.png" alt="Filter Icon" /></div>
-            <div id="sort-icons">
-              <img src="sort-by-walking-time.png" alt="Sort by Walking Time" />
-              <img src="sort-by-biking-time.png" alt="Sort by Biking Time" />
-              <img src="sort-by-total-time.png" alt="Sort by Total Time" />
-            </div>
-            <ul id="route-list">
-              <details open>
-                <summary>Route 1</summary>
-                <p>...</p>
-              </details>
-              <hr />
-              <details open>
-                <summary>Route 2</summary>
-                <p>...</p>
-              </details>
-              <hr />
-              <details open>
-                <summary>Route 3</summary>
-                <p>...</p>
-              </details>
-              <hr />
+              <details><div id="leg1Panel"></div></details>
+              <div id="leg2Panel"></div>
+              <div id="leg3Panel"></div>
+              <!-- <details open>
+                <summary>Route</summary>
+                <div id="directionsPanel"></div>
+              </details> -->
               <span aria-busy="true">Generating your link...</span>
               <progress></progress>
               <!-- TODO modals https://picocss.com/docs/modal -->
-            </ul>
           </div>
         </div>
         <div class="container right" id="map"></div>
       </div>
     </main>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&libraries=places&callback=initMap&v=weekly" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&libraries=places,geometry&callback=initMap&v=weekly" defer></script>
   </body>
 </html>

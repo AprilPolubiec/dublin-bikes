@@ -17,7 +17,7 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
       bounds: defaultBounds,
       componentRestrictions: { country: "ie" },
       // Fields: https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
-      fields: ["place_id"],
+      fields: ["place_id", "geometry"],
       // fields: ["address_components", "geometry", "icon", "name"],
       strictBounds: false,
     };
@@ -61,33 +61,105 @@ async function initMap() {
       });
       markerBounds.extend(position)
     }
-    // TODO: show current location https://developers.google.com/maps/documentation/javascript/geolocation
     map.fitBounds(markerBounds);
-    // new AutocompleteDirectionsHandler(map);
     const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer();
-    directionsRenderer.setMap(map)
-    document.getElementById("search-form").onsubmit = (e) => getDirections(e, directionsService, directionsRenderer, start_location, end_location)
+    document.getElementById("search-form").onsubmit = (e) => getDirections(e, directionsService, map, stations, start_location, end_location)
 
 }
 
+function getClosestStation(placeGeometry, stations) {
+  let closestDistance = google.maps.geometry.spherical.computeDistanceBetween({lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude)}, placeGeometry);
+  let closestStation = stations[0];
+  for (const station of stations) {
+    const lng = parseFloat(station.PositionLongitude)
+    const lat = parseFloat(station.PositionLatitude)
+    const distance = google.maps.geometry.spherical.computeDistanceBetween({lat, lng}, placeGeometry)
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestStation = station;
+    }
+  }
+
+  return { lat: parseFloat(closestStation.PositionLatitude), lng: parseFloat(closestStation.PositionLongitude) };
+}
+
 // https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-directions
-function getDirections(e, directionsService, directionsRenderer,start_location, end_location) {
+function getDirections(e, directionsService, map, stations, start_location, end_location) {
   e.preventDefault();
   console.log(e, start_location, end_location)
   const start_place = start_location.getPlace();
   const end_place = end_location.getPlace();
  
+  const closest_start_station = getClosestStation(start_place.geometry.location, stations)
+  const closest_end_station = getClosestStation(end_place.geometry.location, stations)
+  // const closest_start_station = {lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude)}
+  // const closest_end_station = {lat: parseFloat(stations[1].PositionLatitude), lng: parseFloat(stations[1].PositionLongitude)}
+  // Get walking directions from start location to the start station
+  const firstLegRenderer = new google.maps.DirectionsRenderer( {
+    map: map,
+    preserveViewport: true,
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: 'red'
+    }});
+  firstLegRenderer.setPanel(document.getElementById('leg1Panel'));
   directionsService.route(
     {
       origin: { placeId: start_place.place_id},
-      destination: { placeId: end_place.place_id },
-      // TODO: now need routes with walking and biking too
+      destination: closest_start_station,
       travelMode: google.maps.TravelMode.WALKING,
     },
     (response, status) => {
       if (status === "OK") {
-        directionsRenderer.setDirections(response);
+        firstLegRenderer.setDirections(response);
+      } else {
+        window.alert("Directions request failed due to " + status);
+      }
+    },
+  );
+
+  // Get bike directions from start station to end station
+  const secondLegRenderer = new google.maps.DirectionsRenderer(new google.maps.DirectionsRenderer( {
+    map: map,
+    preserveViewport: true,
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: 'blue'
+    }}));
+    secondLegRenderer.setPanel(document.getElementById('leg2Panel'));
+  directionsService.route(
+    {
+      origin: closest_start_station,
+      destination: closest_end_station,
+      travelMode: google.maps.TravelMode.BICYCLING,
+    },
+    (response, status) => {
+      if (status === "OK") {
+        secondLegRenderer.setDirections(response);
+      } else {
+        window.alert("Directions request failed due to " + status);
+      }
+    },
+  );
+
+  // Get walking directions from end station to destination
+  const thirdLegRenderer = new google.maps.DirectionsRenderer(new google.maps.DirectionsRenderer( {
+    map: map,
+    preserveViewport: true,
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: 'red'
+    }}));
+    thirdLegRenderer.setPanel(document.getElementById('leg3Panel'));
+  directionsService.route(
+    {
+      origin: closest_end_station,
+      destination: { placeId: end_place.place_id },
+      travelMode: google.maps.TravelMode.WALKING,
+    },
+    (response, status) => {
+      if (status === "OK") {
+        thirdLegRenderer.setDirections(response);
       } else {
         window.alert("Directions request failed due to " + status);
       }
