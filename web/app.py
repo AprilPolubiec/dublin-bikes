@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-import web.db_utils as db_utils
+from . import db_utils as db_utils
 import os
 import json
 
