@@ -120,7 +120,7 @@ if confirm_create_daily_weather == data["DB_PASSWORD"]:
         sql = """
             CREATE TABLE DailyWeather (
                 DateTime DATETIME NOT NULL,
-                FutureDate DATETIME NOT NULL,
+                ForecastDate DATETIME NOT NULL,
                 Humidity INTEGER,
                 Pop FLOAT,
                 Pressure INTEGER,
@@ -132,7 +132,7 @@ if confirm_create_daily_weather == data["DB_PASSWORD"]:
                 WindGust FLOAT,
                 Rain FLOAT,
                 Snow FLOAT,
-                PRIMARY KEY (DateTime, FutureDate)
+                PRIMARY KEY (DateTime, ForecastDate)
                 )
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS DailyWeather"))
@@ -151,7 +151,7 @@ if confirm_create_hourly_weather == data["DB_PASSWORD"]:
         sql = """
             CREATE TABLE HourlyWeather (
             DateTime DATETIME NOT NULL,
-            FutureDate DATETIME NOT NULL,
+            ForecastDate DATETIME NOT NULL,
             FeelsLike FLOAT,
             Humidity INTEGER,
             Pop FLOAT,
@@ -163,7 +163,7 @@ if confirm_create_hourly_weather == data["DB_PASSWORD"]:
             WindGust FLOAT,
             Rain1h FLOAT,
             Snow1h FLOAT,
-            PRIMARY KEY (DateTime, FutureDate)
+            PRIMARY KEY (DateTime, ForecastDate)
             )
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS HourlyWeather"))
