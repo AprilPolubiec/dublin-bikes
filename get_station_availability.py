@@ -67,4 +67,4 @@ station_rows = station_rows_from_list(realtime_data)
 #     print("Added stations")
 
 # print("Inserting availabilities: ", availability_rows)
-# insert_availabilities(availability_rows)
+insert_availabilities(availability_rows)

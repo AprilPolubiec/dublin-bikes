@@ -40,7 +40,7 @@ def get_realtime_data():
                 "address": d["address"],
                 "zip": "000000", # TODO: remove
                 "city": "Dublin",
-                "accepts_cards": d["banking"],
+                "accepts_cards": int(d["banking"]),
                 "total_stands": d["totalStands"]["capacity"],
                 "status": d["status"],
                 "mechanical_available": d["totalStands"]["availabilities"]["mechanicalBikes"],
@@ -59,16 +59,16 @@ if now >= datetime.time(5, 0) or now <= datetime.time(0, 30): # Don't scrape bet
     # Query data from JCDecaux
     realtime_data = get_realtime_data()
 
-    availability_rows = availability_rows_from_list(realtime_data)
-    station_rows = station_rows_from_list(realtime_data)
-    # (station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
-    # print("New station data identified: ", station_rows_to_update)
+availability_rows = availability_rows_from_list(realtime_data)
+station_rows = station_rows_from_list(realtime_data)
+(station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
 
-    # if len(station_rows_to_update) > 0:
-    #     update_stations(station_rows_to_update)
-    #     print("Updated stations")
-    # if len(station_rows_to_add) > 0:
-    #     insert_stations(station_rows_to_add)
-    #     print("Added stations")
+# TODO: this is a bit finicky so lets make sure it doesnt break things
+if len(station_rows_to_update) > 0:
+    update_stations(station_rows_to_update)
+    print("Updated stations")
+if len(station_rows_to_add) > 0:
+    insert_stations(station_rows_to_add)
+    print("Added stations")
 
     insert_availabilities(availability_rows)
