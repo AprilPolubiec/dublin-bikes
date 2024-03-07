@@ -14,15 +14,16 @@ data = json.load(f)
 DEV = os.environ["DBIKE_DEV"] == "True"
 if DEV:
     URI = "127.0.0.1"
+    PASSWORD = data["DEV_DB_PASSWORD"]
 else:
     URI = "dublin-bikes-db.cnyo8auy4q4b.us-east-1.rds.amazonaws.com" # TODO: add dev env variables
-
+    PASSWORD = data["DEV_DB_PASSWORD"]
 PORT = 3306
 DB = "dublin-bikes"
 USER = "admin"
 
 engine = sqla.create_engine(
-    "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
+    "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, PASSWORD, URI, PORT, DB),
     echo=True,
 )
 caching_enabled = True

@@ -20,12 +20,12 @@ USER = "admin"
 
 try:
     engine = sqla.create_engine(
-        "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB),
+        "mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DEV_DB_PASSWORD"], URI, PORT, DB),
         echo=True,
     )
     conn = engine.connect()
 except:
-    raise Exception("mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DB_PASSWORD"], URI, PORT, DB))
+    raise Exception("mysql+mysqlconnector://{}:{}@{}:{}/{}".format(USER, data["DEV_DB_PASSWORD"], URI, PORT, DB))
 
 confirm_create_station = ""
 
@@ -38,8 +38,8 @@ if confirm_create_station == data["DB_PASSWORD"]:
             CREATE TABLE Station (
             Id INT NOT NULL,
             Name VARCHAR(45) NULL,
-            PositionLatitude VARCHAR(45) NULL,
-            PositionLongitude VARCHAR(45) NULL,
+            PositionLatitude DECIMAL(6) NULL,
+            PositionLongitude DECIMAL(6) NULL,
             Address VARCHAR(45) NULL,
             ZipCode VARCHAR(45) NULL,
             City VARCHAR(45) NULL,
@@ -111,7 +111,6 @@ if confirm_create_current_weather == data["DB_PASSWORD"]:
     except:
         raise "Failed to create current table"
 
-confirm_create_daily_weather = ""
 while confirm_create_daily_weather != data["DB_PASSWORD"] and confirm_create_daily_weather != "pass":
     confirm_create_daily_weather = input("You are about to create a new DailyWeather table which will delete existing DailyWeather table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
 
@@ -119,57 +118,26 @@ if confirm_create_daily_weather == data["DB_PASSWORD"]:
     try:
         sql = """
             CREATE TABLE DailyWeather (
-                DateTime DATETIME NOT NULL,
-                ForecastDate DATETIME NOT NULL,
-                Humidity INTEGER,
-                Pop FLOAT,
-                Pressure INTEGER,
-                TemperatureMax FLOAT,
-                TemperatureMin FLOAT,
-                UVI FLOAT,
-                WeatherId INTEGER,
-                WindSpeed FLOAT,
-                WindGust FLOAT,
-                Rain FLOAT,
-                Snow FLOAT,
-                PRIMARY KEY (DateTime, ForecastDate)
+                dt DATETIME NOT NULL,
+                future_dt DATETIME NOT NULL,
+                humidity INTEGER,
+                pop FLOAT,
+                pressure INTEGER,
+                temp_max FLOAT,
+                temp_min FLOAT,
+                uvi FLOAT,
+                weather_id INTEGER,
+                wind_speed FLOAT,
+                wind_gust FLOAT,
+                rain FLOAT,
+                snow FLOAT,
+                PRIMARY KEY (dt, future_dt)
                 )
         """
         conn.execute(sqla.text("DROP TABLE IF EXISTS DailyWeather"))
         conn.execute(sqla.text(sql))
         conn.commit()
         print("DailyWeather table created successfully \u2764")
-    except:
-        raise "Failed to create current table"
-
-confirm_create_hourly_weather = ""
-while confirm_create_hourly_weather != data["DB_PASSWORD"] and confirm_create_hourly_weather != "pass":
-    confirm_create_hourly_weather = input("You are about to create a new HourlyWeather table which will delete existing HourlyWeather table if it exists. If you are sure you want to do this, enter the DB password to proceed. To skip table creation, type 'pass': ")
-
-if confirm_create_hourly_weather == data["DB_PASSWORD"]:
-    try:
-        sql = """
-            CREATE TABLE HourlyWeather (
-            DateTime DATETIME NOT NULL,
-            ForecastDate DATETIME NOT NULL,
-            FeelsLike FLOAT,
-            Humidity INTEGER,
-            Pop FLOAT,
-            Pressure INTEGER,
-            Temperature FLOAT,
-            UVI FLOAT,
-            WeatherId INTEGER,
-            WindSpeed FLOAT,
-            WindGust FLOAT,
-            Rain1h FLOAT,
-            Snow1h FLOAT,
-            PRIMARY KEY (DateTime, ForecastDate)
-            )
-        """
-        conn.execute(sqla.text("DROP TABLE IF EXISTS HourlyWeather"))
-        conn.execute(sqla.text(sql))
-        conn.commit()
-        print("HourlyWeather table created successfully \u2764")
     except:
         raise "Failed to create current table"
 
