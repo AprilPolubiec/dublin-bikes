@@ -13,7 +13,7 @@ file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 f = open(file_path)
 data = json.load(f)
 
-PORT = 3306
+PORT = 3307
 DB = "dublin-bikes"
 URI = "127.0.0.1"
 USER = "admin"
