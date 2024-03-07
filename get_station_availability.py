@@ -1,16 +1,13 @@
 import requests
+import json
+from datetime import datetime
+import os
+import sys
 from web.db_utils import (
     availability_rows_from_list,
     station_rows_from_list,
-    get_updated_rows,
-    update_stations,
-    insert_stations,
     insert_availabilities,
 )
-import json
-import datetime
-import os
-import pytz
 
 def get_realtime_data():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +37,7 @@ def get_realtime_data():
                 "address": d["address"],
                 "zip": "000000", # TODO: remove
                 "city": "Dublin",
-                "accepts_cards": int(d["banking"]),
+                "accepts_cards": d["banking"],
                 "total_stands": d["totalStands"]["capacity"],
                 "status": d["status"],
                 "mechanical_available": d["totalStands"]["availabilities"]["mechanicalBikes"],
@@ -54,21 +51,20 @@ def get_realtime_data():
         print("Failed to fetch data from the API. Status code:", response.status_code)
 
 
-now = datetime.datetime.now(tz=pytz.timezone('Europe/Dublin')).time()
-if now >= datetime.time(5, 0) or now <= datetime.time(0, 30): # Don't scrape between 12:30 - 05:00
-    # Query data from JCDecaux
-    realtime_data = get_realtime_data()
+# Query data from JCDecaux
+realtime_data = get_realtime_data()
 
 availability_rows = availability_rows_from_list(realtime_data)
 station_rows = station_rows_from_list(realtime_data)
-(station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
+# (station_rows_to_update, station_rows_to_add) = get_updated_rows(station_rows)
+# print("New station data identified: ", station_rows_to_update)
 
-# TODO: this is a bit finicky so lets make sure it doesnt break things
-if len(station_rows_to_update) > 0:
-    update_stations(station_rows_to_update)
-    print("Updated stations")
-if len(station_rows_to_add) > 0:
-    insert_stations(station_rows_to_add)
-    print("Added stations")
+# if len(station_rows_to_update) > 0:
+#     update_stations(station_rows_to_update)
+#     print("Updated stations")
+# if len(station_rows_to_add) > 0:
+#     insert_stations(station_rows_to_add)
+#     print("Added stations")
 
-    insert_availabilities(availability_rows)
+# print("Inserting availabilities: ", availability_rows)
+# insert_availabilities(availability_rows)
