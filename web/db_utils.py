@@ -3,6 +3,7 @@ import json
 import csv
 import os
 import sys
+import datetime
 from .utils import group_by, clean_type
 
 # Opening JSON file
@@ -123,6 +124,129 @@ class StationRow(DBRow):
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
         print("Created station row: {}".format(self))
+
+class CurrentWeatherRow(DBRow):
+    table_name = "CurrentWeather"
+    table = sqla.Table(table_name, sqla.MetaData(), autoload_with=engine)
+    columns = [
+        "DateTime",
+        "FeelsLike",
+        "Humidity",
+        "Pressure",
+        "Sunrise",
+        "Sunset",
+        "Temperature",
+        "UVI",
+        "WeatherId",
+        "WindGust",
+        "WindSpeed",
+        "Rain1h",
+        "Snow1h",
+    ]
+
+    def __init__(self, obj, is_row = False):
+        if is_row:
+            self.from_row(obj)
+        else:
+            try:
+                self.DateTime = datetime.datetime.now()
+                self.FeelsLike = obj["feels_like"]
+                self.Humidity = obj["humidity"]
+                self.Pressure = obj["pressure"]
+                self.Sunrise = obj["sunrise"]
+                self.Sunset = obj["sunset"]
+                self.Temperature = obj["temperature"]
+                self.UVI = 0.0
+                self.WeatherId = obj["weather_id"]
+                self.WindSpeed = obj["wind_speed"]
+                self.WindGust = 0.0 # where does this come from? daily?
+                self.Rain1h = 0.0 # what is this
+                self.Snow1h = 0.0 # what is this
+                # self.Rain1h = obj["rain_1h"]
+                # self.Snow1h = obj["snow_1h"]
+            except TypeError:
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+        print("Created CurrentWeather row: {}".format(self))
+
+class DailyWeatherRow(DBRow):
+    table_name = "DailyWeather"
+    table = sqla.Table(table_name, sqla.MetaData(), autoload_with=engine)
+    columns = [
+        "DateTime",
+        "ForecastDate",
+        "Humidity",
+        "Pop",
+        "Pressure",
+        "TemperatureMax",
+        "TemperatureMin",
+        "UVI",
+        "WeatherId",
+        "WindSpeed",
+        "WindGust",
+        "Rain",
+        "Snow",
+    ]
+
+    def __init__(self, obj, is_row = False):
+        if is_row:
+            self.from_row(obj)
+        else:
+            try:
+                self.DateTime = datetime.datetime.now()
+                self.ForecastDate = obj["forecast_date"] # What is this?
+                self.Humidity = obj["humidity"]
+                self.Pressure = obj["pressure"]
+                self.TemperatureMax = obj["temperature_max"]
+                self.TemperatureMin = obj["temperature_min"]
+                self.UVI = 0.0
+                self.WeatherId = obj["weather_id"]
+                self.WindGust = obj["wind_gust"]
+                self.WindSpeed = obj["wind_speed"]
+                self.Rain = obj["rain"]
+                self.Snow = obj["snow"]
+            except TypeError:
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+        print("Created DailyWeatherRow row: {}".format(self))
+class HourlyWeatherRow(DBRow):
+    table_name = "HourlyWeather"
+    table = sqla.Table(table_name, sqla.MetaData(), autoload_with=engine)
+    columns = [
+        "DateTime",
+        "ForecastDate",
+        "FeelsLike",
+        "Humidity",
+        "Pop",
+        "Pressure",
+        "Temperature",
+        "UVI",
+        "WeatherId",
+        "WindSpeed",
+        "WindGust",
+        "Rain1h",
+        "Snow1h",
+    ]
+
+    def __init__(self, obj, is_row = False):
+        if is_row:
+            self.from_row(obj)
+        else:
+            try:
+                self.DateTime = datetime.datetime.now()
+                self.ForecastDate = obj["forecast_date"] # What is this?
+                self.FeelsLike = obj["feels_like"]
+                self.Pop = obj["pop"]
+                self.Humidity = obj["humidity"]
+                self.Pressure = obj["pressure"]
+                self.Temperature = obj["temperature"]
+                self.UVI = 0.0
+                self.WeatherId = obj["weather_id"]
+                self.WindSpeed = obj["wind_speed"]
+                self.WindGust = obj["wind_gust"]
+                self.Rain1h = None if "rain_1h" not in obj.keys() else obj["rain_1h"]
+                self.Snow1h = None if "snow_1h" not in obj.keys() else obj["snow_1h"]
+            except TypeError:
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+        print("Created HourlyWeatherRow row: {}".format(self))
 
 class AvailabilityRow(DBRow):
     table_name = "Availability"
@@ -289,6 +413,13 @@ def station_rows_from_list(objs: list):
     rows = []
     for o in objs:
         row = StationRow(o)
+        rows.append(row)
+    return rows
+
+def hourly_weather_rows_from_list(objs: list):
+    rows = []
+    for o in objs:
+        row = HourlyWeatherRow(o)
         rows.append(row)
     return rows
 
