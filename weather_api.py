@@ -1,6 +1,6 @@
 import requests
 import json
-from web.db_utils import CurrentWeatherRow, HourlyWeatherRow
+from web.db_utils import CurrentWeatherRow, HourlyWeatherRow, DailyWeatherRow
 
 def get_weather():
     city = 'Dublin'
@@ -67,6 +67,34 @@ def get_weather():
                 d_obj["snow_1h"] = d["snow"]["1h"]
             hourly_rows.append(HourlyWeatherRow(d_obj))
         print(hourly_rows)
+    else:
+        print('Failed to retrieve weather data')
+    
+    # Check if request was successful
+    if daily_response.status_code == 200:
+        # Parse JSON response
+        data = daily_response.json()
+        print("data: ", data)
+        daily_rows = []
+        for d in data["list"]:
+            d_obj = {
+                "forecast_date": d["dt"],
+                "humidity": d["humidity"],
+                "pressure": d["pressure"],
+                "pop": d["pop"],
+                "temperature_max": d["temp"]["max"],
+                "temperature_min": d["temp"]["min"],
+                # "uvi": d["uvi"], TODO: What is this?
+                "weather_id": d["weather"][0]["id"],
+                "wind_speed": d["speed"],
+                "wind_gust": d["gust"],
+            }
+            if "rain" in d.keys():
+                d_obj["rain"] = d["rain"]
+            if "snow" in d.keys():
+                d_obj["snow"] = d["snow"]
+            daily_rows.append(DailyWeatherRow(d_obj))
+        print(daily_rows)
     else:
         print('Failed to retrieve weather data')
 
