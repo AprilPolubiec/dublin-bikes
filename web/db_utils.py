@@ -156,12 +156,12 @@ class CurrentWeatherRow(DBRow):
                 self.Sunrise = obj["sunrise"]
                 self.Sunset = obj["sunset"]
                 self.Temperature = obj["temperature"]
-                self.UVI = 0.0
+                self.UVI = None
                 self.WeatherId = obj["weather_id"]
                 self.WindSpeed = obj["wind_speed"]
-                self.WindGust = 0.0 # where does this come from? daily?
-                self.Rain1h = 0.0 # what is this
-                self.Snow1h = 0.0 # what is this
+                self.WindGust = None # where does this come from? daily?
+                self.Rain1h = None # what is this
+                self.Snow1h = None # what is this
                 # self.Rain1h = obj["rain_1h"]
                 # self.Snow1h = obj["snow_1h"]
             except TypeError:
@@ -199,7 +199,7 @@ class DailyWeatherRow(DBRow):
                 self.Pressure = obj["pressure"]
                 self.TemperatureMax = obj["temperature_max"]
                 self.TemperatureMin = obj["temperature_min"]
-                self.UVI = 0.0
+                self.UVI = None
                 self.WeatherId = obj["weather_id"]
                 self.WindGust = obj["wind_gust"]
                 self.WindSpeed = obj["wind_speed"]
@@ -239,7 +239,7 @@ class HourlyWeatherRow(DBRow):
                 self.Humidity = obj["humidity"]
                 self.Pressure = obj["pressure"]
                 self.Temperature = obj["temperature"]
-                self.UVI = 0.0
+                self.UVI = None
                 self.WeatherId = obj["weather_id"]
                 self.WindSpeed = obj["wind_speed"]
                 self.WindGust = obj["wind_gust"]
