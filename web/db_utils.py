@@ -195,6 +195,7 @@ class DailyWeatherRow(DBRow):
                 self.DateTime = datetime.datetime.now()
                 self.ForecastDate = obj["forecast_date"] # What is this?
                 self.Humidity = obj["humidity"]
+                self.Pop = obj["pop"]
                 self.Pressure = obj["pressure"]
                 self.TemperatureMax = obj["temperature_max"]
                 self.TemperatureMin = obj["temperature_min"]
@@ -202,8 +203,8 @@ class DailyWeatherRow(DBRow):
                 self.WeatherId = obj["weather_id"]
                 self.WindGust = obj["wind_gust"]
                 self.WindSpeed = obj["wind_speed"]
-                self.Rain = obj["rain"]
-                self.Snow = obj["snow"]
+                self.Rain = None if "rain" not in obj.keys() else obj["rain"]
+                self.Snow = None if "snow" not in obj.keys() else obj["snow"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
         print("Created DailyWeatherRow row: {}".format(self))
