@@ -1,6 +1,7 @@
 import requests
 import json
-from web.db_utils import CurrentWeatherRow, HourlyWeatherRow, DailyWeatherRow
+import datetime
+from web.db_utils import CurrentWeatherRow, HourlyWeatherRow, DailyWeatherRow, insert_row, insert_rows
 
 def get_weather():
     city = 'Dublin'
@@ -24,12 +25,13 @@ def get_weather():
         # Parse JSON response
         data = current_response.json()
         current_row = CurrentWeatherRow({
-            "forecast_date": data["dt"],
+            "forecast_date": datetime.datetime.fromtimestamp(data["dt"]),
             "feels_like": data["main"]["feels_like"],
             "humidity": data["main"]["humidity"],
             "pressure": data["main"]["pressure"],
-            "sunrise": data["sys"]["sunrise"],
-            "sunset": data["sys"]["sunset"],
+            # TODO: better validation on datetimes
+            "sunrise": datetime.datetime.fromtimestamp(data["sys"]["sunrise"]),
+            "sunset": datetime.datetime.fromtimestamp(data["sys"]["sunset"]),
             "temperature": data["main"]["temp"],
             "weather_id": data["weather"][0]["id"],
             "wind_speed": data["wind"]["speed"],
@@ -38,7 +40,7 @@ def get_weather():
             "rain_1h": 0.0,
             "uvi": 0.0
         })
-        print(current_row)
+        insert_row(current_row, CurrentWeatherRow.table)
     else:
         print('Failed to retrieve weather data')
 
@@ -46,11 +48,10 @@ def get_weather():
     if hourly_response.status_code == 200:
         # Parse JSON response
         data = hourly_response.json()
-        print("data: ", data)
         hourly_rows = []
         for d in data["list"]:
             d_obj = {
-                "forecast_date": d["dt"],
+                "forecast_date": datetime.datetime.fromtimestamp(d["dt"]),
                 "humidity": d["main"]["humidity"],
                 "feels_like": d["main"]["feels_like"],
                 "pressure": d["main"]["pressure"],
@@ -66,7 +67,7 @@ def get_weather():
             if "snow" in d.keys():
                 d_obj["snow_1h"] = d["snow"]["1h"]
             hourly_rows.append(HourlyWeatherRow(d_obj))
-        print(hourly_rows)
+        insert_rows(hourly_rows, HourlyWeatherRow.table)
     else:
         print('Failed to retrieve weather data')
     
@@ -74,11 +75,10 @@ def get_weather():
     if daily_response.status_code == 200:
         # Parse JSON response
         data = daily_response.json()
-        print("data: ", data)
         daily_rows = []
         for d in data["list"]:
             d_obj = {
-                "forecast_date": d["dt"],
+                "forecast_date": datetime.datetime.fromtimestamp(d["dt"]),
                 "humidity": d["humidity"],
                 "pressure": d["pressure"],
                 "pop": d["pop"],
@@ -94,7 +94,7 @@ def get_weather():
             if "snow" in d.keys():
                 d_obj["snow"] = d["snow"]
             daily_rows.append(DailyWeatherRow(d_obj))
-        print(daily_rows)
+        insert_rows(daily_rows, DailyWeatherRow.table)
     else:
         print('Failed to retrieve weather data')
 
