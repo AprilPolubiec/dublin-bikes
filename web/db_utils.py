@@ -11,7 +11,9 @@ file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 f = open(file_path)
 data = json.load(f)
 
-DEV = os.environ["DBIKE_DEV"] == "True"
+DEV = os.getenv("DBIKE_DEV") == "True"
+#DEV = os.getenv("DBIKE_DEV", "False") == "True"
+
 if DEV:
     URI = "127.0.0.1"
 else:
@@ -321,6 +323,7 @@ def get_station(station_id: str):
     print("Found station: {}".format(rows[0]))
     return StationRow(rows[0], is_sql=True)
 
+
 def get_stations():
     stations = []
     stmnt = sqla.select(StationRow.table)
@@ -331,6 +334,8 @@ def get_stations():
         stations.append(station)
     print("Found stations: {}".format(stations))
     return stations
+
+
 
 def insert_station(row: StationRow):
     return insert_row(row, StationRow.table)
@@ -366,7 +371,7 @@ def delete_stations(ids: list[int]) -> list[int]:
     return results
 
 #endregion
-    
+
 #startregion AVAILABILITY QUERIES
 def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
     start_timestamp = start_timestamp if start_timestamp is not None else 0
@@ -397,8 +402,8 @@ def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: 
     end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
     table = AvailabilityRow.table
     result = conn.execute(sqla.delete(AvailabilityRow.table)
-                          .where((table.c.StationId == station_id) & 
-                                 (table.c.LastUpdated >= start_timestamp) & 
+                          .where((table.c.StationId == station_id) &
+                                 get_availability                 (table.c.LastUpdated >= start_timestamp) &
                                  (table.c.LastUpdated <= end_timestamp)))
     conn.commit()
     print("Deleted rows: {}".format(result.rowcount))
@@ -414,7 +419,7 @@ def availability_rows_from_list(objs: list):
         rows.append(row)
     return rows
 
-def station_rows_from_list(objs: list):
+def hourly_weather_rows_from_list(objs: list):
     rows = []
     for o in objs:
         row = StationRow(o)
@@ -427,6 +432,20 @@ def hourly_weather_rows_from_list(objs: list):
         row = HourlyWeatherRow(o)
         rows.append(row)
     return rows
+
+def get_date_weather(date: datetime):
+    table = DailyWeatherRow.table
+    rows = conn.execute(sqla.select(table).where(table.c.DateTime == date)).all()
+    print("Found weather: {}".format(rows[0]))
+    return DailyWeatherRow(rows[0], is_sql=True)
+
+def get_current_weather():
+    table = CurrentWeatherRow.table
+    rows = conn.execute(sqla.select(table))
+    print("Found weather: {}".format(rows[0]))
+    return CurrentWeatherRow(rows[0], is_sql=True)
+
+
 
 def get_cache_path(table_name):
     """Given a type of row, returns where the cache file will be stored for that table.
