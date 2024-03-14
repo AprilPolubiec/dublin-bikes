@@ -1,4 +1,5 @@
 import { getStations } from './db_queries.js';
+import { MarkerClusterer } from "@googlemaps/markerclustererplus";
 
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
@@ -33,20 +34,28 @@ async function initMap() {
 
     const start_location = addDestinationAutocompleteInputs(dublinCoordinates, "start-location")
     const end_location = addDestinationAutocompleteInputs(dublinCoordinates, "end-location")
-  
+    const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     var markerBounds = new google.maps.LatLngBounds();
+    var markers = [];
     const stations = await getStations();
+    let labelIndex = 0; // Initialize label index
+
     for (const station of stations) {
         const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude))
-
+        const label = labels[labelIndex % labels.length];
         const marker = new google.maps.Marker({
+            label,
             position,
             map,
             title: station.Name,
             fillColor: "#99ff33"
         });
 // TODO: clustering https://developers.google.com/maps/documentation/javascript/examples/marker-clustering
+        markers.push(marker);
 // TODO: use advanced markers
+        labelIndex++; // Increment label index
+
         const contentString =
             '<div class="infowindow-content">' +
             "<p><b>Availability: </b> 0 " +
@@ -63,11 +72,15 @@ async function initMap() {
         });
       });
       markerBounds.extend(position)
+
+
     }
     map.fitBounds(markerBounds);
     const directionsService = new google.maps.DirectionsService();
     document.getElementById("search-form").onsubmit = (e) => getDirections(e, directionsService, map, stations, start_location, end_location)
-
+    new MarkerClusterer(map, markers, {
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/markerclusterer/m',
+    });
 }
 
 function getClosestStation(placeGeometry, stations) {
