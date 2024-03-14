@@ -88,7 +88,6 @@ class StationRow(DBRow):
         "PositionLatitude",
         "PositionLongitude",
         "Address",
-        "ZipCode",
         "City",
         "AcceptsCard",
         "TotalStands",
@@ -103,7 +102,6 @@ class StationRow(DBRow):
             self.PositionLatitude = obj["PositionLatitude"]
             self.PositionLongitude = obj["PositionLongitude"]
             self.Address = obj["Address"]
-            self.ZipCode = obj["ZipCode"]
             self.City = obj["City"]
             self.AcceptsCard = obj["AcceptsCard"]
             self.TotalStands = obj["TotalStands"]
@@ -114,7 +112,6 @@ class StationRow(DBRow):
                 self.PositionLatitude = obj["latitude"]
                 self.PositionLongitude = obj["longitude"]
                 self.Address = obj["address"]
-                self.ZipCode = obj["zip"]
                 self.City = obj["city"]
                 self.AcceptsCard = obj["accepts_cards"]
                 self.TotalStands = obj["total_stands"]
@@ -514,11 +511,11 @@ def cache_data(row_type: StationRow):
 def get_current_weather():
     # table = CurrentWeatherRow.table 
     current_weather = []
-    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.id)).limit(1)
+    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.DateTime)).limit(1)
     rows = conn.execute(stmnt)
 
     for row in rows:
-        currentweather = CurrentWeatherRow(list(row), is_sql=True).values() # Convert the list into a CurrentWeatherRow instance
+        currentweather = CurrentWeatherRow(list(row), is_row = True).values() # Convert the list into a CurrentWeatherRow instance
         current_weather.append(currentweather)
     print("Found weather: {}".format(current_weather))
     return current_weather
