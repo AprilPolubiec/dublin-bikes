@@ -32,7 +32,8 @@ def get_availability(station_id): # TODO COM-46: needs to expect the following q
 
 @app.route('/current-weather')
 def get_current_weather():
-    #folder.get_currentweather
+    current_weather = db_utils.get_current_weather
+    return current_weather
 
 
 # @app.teardown_appcontext

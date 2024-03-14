@@ -6,7 +6,7 @@ import csv
 import os
 import sys
 import datetime
-from .utils import group_by, clean_type
+from utils import group_by, clean_type
 
 # Opening JSON file
 file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secure/credentials.json")
@@ -512,16 +512,16 @@ def cache_data(row_type: StationRow):
     f.close()
 
 def get_current_weather():
-#     # table = CurrentWeatherRow.table 
-#     current_weather = []
-#     stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.id)).limit(1)
-#     rows = conn.execute(stmnt)
+    # table = CurrentWeatherRow.table 
+    current_weather = []
+    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.id)).limit(1)
+    rows = conn.execute(stmnt)
 
-#     for row in rows:
-#         currentweather = CurrentWeatherRow(list(row), is_sql=True).values() # Convert the list into a CurrentWeatherRow instance
-#         current_weather.append(currentweather)
-#     print("Found weather: {}".format(current_weather))
-#     return current_weather
+    for row in rows:
+        currentweather = CurrentWeatherRow(list(row), is_sql=True).values() # Convert the list into a CurrentWeatherRow instance
+        current_weather.append(currentweather)
+    print("Found weather: {}".format(current_weather))
+    return current_weather
 
 
 #select(user_table).order_by(user_table.c.name) but replace user_table
