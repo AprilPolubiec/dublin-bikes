@@ -1,5 +1,6 @@
 import sqlalchemy as sqla
 from sqlalchemy import select
+from sqlalchemy import desc
 import json
 import csv
 import os
@@ -511,18 +512,20 @@ def cache_data(row_type: StationRow):
     f.close()
 
 def get_current_weather():
-    # table = CurrentWeatherRow.table 
-    current_weather = []
-    stmnt = sqla.select(CurrentWeatherRow.table)
-    rows = conn.execute(stmnt)
+#     # table = CurrentWeatherRow.table 
+#     current_weather = []
+#     stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.id)).limit(1)
+#     rows = conn.execute(stmnt)
 
-    for row in rows:
-        currentweather = CurrentWeatherRow(list(row), is_sql=True).values() # Convert the list into a CurrentWeatherRow instance
-        current_weather.append(currentweather)
-    print("Found weather: {}".format(current_weather))
-    return current_weather
+#     for row in rows:
+#         currentweather = CurrentWeatherRow(list(row), is_sql=True).values() # Convert the list into a CurrentWeatherRow instance
+#         current_weather.append(currentweather)
+#     print("Found weather: {}".format(current_weather))
+#     return current_weather
 
 
-stmt = select(CurrentWeatherRow.table).where(CurrentWeatherRow.table.c.name == "")
-print(stmt)
+#select(user_table).order_by(user_table.c.name) but replace user_table
+# print(stmnt)
+
+
 #endregion
