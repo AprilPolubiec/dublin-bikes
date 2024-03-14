@@ -4,7 +4,6 @@ from . import db_utils as db_utils
 import os
 import json
 import datetime
-from db_utils import CurrentWeatherRow, DailyWeatherRow
 
 
 
