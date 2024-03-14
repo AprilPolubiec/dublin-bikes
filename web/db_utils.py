@@ -6,7 +6,7 @@ import csv
 import os
 import sys
 import datetime
-from utils import group_by, clean_type
+from .utils import group_by, clean_type
 
 # Opening JSON file
 file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secure/credentials.json")
