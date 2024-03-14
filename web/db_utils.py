@@ -11,7 +11,9 @@ file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 f = open(file_path)
 data = json.load(f)
 
-DEV = os.environ["DBIKE_DEV"] == "True"
+DEV = os.getenv("DBIKE_DEV") == "True"
+#DEV = os.getenv("DBIKE_DEV", "False") == "True"
+
 if DEV:
     URI = "127.0.0.1"
 else:
@@ -321,6 +323,7 @@ def get_station(station_id: str):
     print("Found station: {}".format(rows[0]))
     return StationRow(rows[0], is_sql=True)
 
+
 def get_stations():
     stations = []
     stmnt = sqla.select(StationRow.table)
@@ -331,6 +334,8 @@ def get_stations():
         stations.append(station)
     print("Found stations: {}".format(stations))
     return stations
+
+
 
 def insert_station(row: StationRow):
     return insert_row(row, StationRow.table)
@@ -366,7 +371,7 @@ def delete_stations(ids: list[int]) -> list[int]:
     return results
 
 #endregion
-    
+
 #startregion AVAILABILITY QUERIES
 def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
     start_timestamp = start_timestamp if start_timestamp is not None else 0
@@ -380,6 +385,23 @@ def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
                     )
     for row in rows:
         availabilities.append(AvailabilityRow(row, is_sql=True))
+    print("Found availabilities: {}".format(availabilities))
+    return availabilities
+
+
+def get_availabilities(start_timestamp: int, end_timestamp: int):
+    start_timestamp = start_timestamp if start_timestamp is not None else 0
+    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
+    availabilities = []
+    table = AvailabilityRow.table
+    rows = conn.execute(sqla.select(table)
+                        .where(table.c.LastUpdated >= start_timestamp)
+                        .where(table.c.LastUpdated <= end_timestamp)
+                        )
+
+    for row in rows:
+        availability = AvailabilityRow(list(row), is_sql=True).values()
+        availabilities .append(availability)
     print("Found availabilities: {}".format(availabilities))
     return availabilities
 
@@ -397,8 +419,8 @@ def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: 
     end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
     table = AvailabilityRow.table
     result = conn.execute(sqla.delete(AvailabilityRow.table)
-                          .where((table.c.StationId == station_id) & 
-                                 (table.c.LastUpdated >= start_timestamp) & 
+                          .where((table.c.StationId == station_id) &
+                                 get_availability                 (table.c.LastUpdated >= start_timestamp) &
                                  (table.c.LastUpdated <= end_timestamp)))
     conn.commit()
     print("Deleted rows: {}".format(result.rowcount))
@@ -424,9 +446,36 @@ def station_rows_from_list(objs: list):
 def hourly_weather_rows_from_list(objs: list):
     rows = []
     for o in objs:
+        row = StationRow(o)
+        rows.append(row)
+    return rows
+
+def hourly_weather_rows_from_list(objs: list):
+    rows = []
+    for o in objs:
         row = HourlyWeatherRow(o)
         rows.append(row)
     return rows
+
+def get_date_weather(date: datetime.date):
+    table = DailyWeatherRow.table
+    query = sqla.select(table).where(sqla.func.date(table.c.ForecastDate) == date)
+    results = conn.execute(query).fetchall()
+    if results:
+        return [DailyWeatherRow(result, is_sql=True) for result in results]
+    else:
+        return []
+
+def get_current_weather():
+    table = CurrentWeatherRow.table
+    query = sqla.select(table).order_by(table.c.DateTime.desc()).limit(1)
+    result = conn.execute(query).fetchone()
+    if result:
+        return CurrentWeatherRow(result, is_sql=True)
+    else:
+        return None
+
+
 
 def get_cache_path(table_name):
     """Given a type of row, returns where the cache file will be stored for that table.

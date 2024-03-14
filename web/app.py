@@ -1,9 +1,17 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+
 from . import db_utils as db_utils
 import os
 import json
+import requests
+import datetime
+from db_utils import CurrentWeatherRow, DailyWeatherRow, insert_rows, availability_rows_from_list, insert_row
+
+
+
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def root():
@@ -13,22 +21,59 @@ def root():
     api_key = data["GOOGLE_MAPS_KEY"]
     return render_template('index.html', apiKey=api_key)
 
+
+
+# startregion STATION QUERIES
 @app.route('/stations')
 def get_stations():
     stations = db_utils.get_stations()
     return stations
 
+
 @app.route('/stations/<int:station_id>')
 def get_station(station_id):
-    db_utils.get_station(station_id)
+    station = db_utils.get_station(station_id)
+    return station
+
+
+#endregion
+
+#startregion AVAILABILITY QUERIES
+
+
+
+@app.route('/availability/<int:station_id>/')
+def get_availability(
+        station_id):  # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
+    start_time = request.args.get('start_time')
+    end_time = request.args.get('end_time')
+
+    availability = db_utils.get_availability(station_id, start_time, end_time)
+    return availability
 
 @app.route('/availability')
 def get_availabilities():
-    db_utils.get_availabilities()
+    start_time = request.args.get('start_time')
+    end_time = request.args.get('end_time')
+    availabilities = db_utils.get_availabilities(start_time,end_time)
+    return availabilities
 
-@app.route('/availability/<int:station_id>/')
-def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
-    db_utils.get_availability(station_id, start_time, end_time)
+
+@app.route('/weather/')
+def get_current_weather():
+    weather = db_utils.get_current_weather()
+    return weather
+
+@app.route('/weather/<datetime.date:date>/')
+def get_forecast_weather(date):
+    weather = db_utils.get_date_weather(date)
+
+    return weather
+
+
+#endregion AVAILABILITY QUERIES
+
+
 
 # @app.teardown_appcontext
 # def close_connection(exception):
