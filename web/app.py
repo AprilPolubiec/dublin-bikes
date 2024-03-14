@@ -3,10 +3,8 @@ from flask import Flask, render_template, request
 from . import db_utils as db_utils
 import os
 import json
-import requests
 import datetime
-from db_utils import CurrentWeatherRow, DailyWeatherRow, insert_rows, availability_rows_from_list, insert_row
-
+from db_utils import CurrentWeatherRow, DailyWeatherRow
 
 
 
