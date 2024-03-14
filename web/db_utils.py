@@ -116,7 +116,7 @@ class StationRow(DBRow):
                 self.AcceptsCard = obj["accepts_cards"]
                 self.TotalStands = obj["total_stands"]
             except TypeError:
-                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         print("Created station row: {}".format(self))
 
 class CurrentWeatherRow(DBRow):
@@ -138,9 +138,9 @@ class CurrentWeatherRow(DBRow):
         "Snow1h",
     ]
 
-    def __init__(self, obj, is_row = False):
-        if is_row:
-            self.from_row(obj)
+    def __init__(self, obj, is_sql = False):
+        if is_sql:
+            self.from_sql(obj)
         else:
             try:
                 self.DateTime = datetime.datetime.now()
@@ -159,7 +159,7 @@ class CurrentWeatherRow(DBRow):
                 # self.Rain1h = obj["rain_1h"]
                 # self.Snow1h = obj["snow_1h"]
             except TypeError:
-                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         print("Created CurrentWeather row: {}".format(self))
 
 class DailyWeatherRow(DBRow):
@@ -181,9 +181,9 @@ class DailyWeatherRow(DBRow):
         "Snow",
     ]
 
-    def __init__(self, obj, is_row = False):
-        if is_row:
-            self.from_row(obj)
+    def __init__(self, obj, is_sql = False):
+        if is_sql:
+            self.from_sql(obj)
         else:
             try:
                 self.DateTime = datetime.datetime.now()
@@ -200,7 +200,7 @@ class DailyWeatherRow(DBRow):
                 self.Rain = None if "rain" not in obj.keys() else obj["rain"]
                 self.Snow = None if "snow" not in obj.keys() else obj["snow"]
             except TypeError:
-                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         print("Created DailyWeatherRow row: {}".format(self))
 class HourlyWeatherRow(DBRow):
     table_name = "HourlyWeather"
@@ -221,9 +221,9 @@ class HourlyWeatherRow(DBRow):
         "Snow1h",
     ]
 
-    def __init__(self, obj, is_row = False):
-        if is_row:
-            self.from_row(obj)
+    def __init__(self, obj, is_sql = False):
+        if is_sql:
+            self.from_sql(obj)
         else:
             try:
                 self.DateTime = datetime.datetime.now()
@@ -240,7 +240,7 @@ class HourlyWeatherRow(DBRow):
                 self.Rain1h = None if "rain_1h" not in obj.keys() else obj["rain_1h"]
                 self.Snow1h = None if "snow_1h" not in obj.keys() else obj["snow_1h"]
             except TypeError:
-                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         print("Created HourlyWeatherRow row: {}".format(self))
 
 class AvailabilityRow(DBRow):
@@ -267,7 +267,7 @@ class AvailabilityRow(DBRow):
                 self.StandsAvailable = obj["stands_available"]
                 self.LastUpdated = obj["last_updated"]
             except TypeError:
-                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_row = True"
+                raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         print("Created availability row: {}".format(self.values()))
 
 def close():
@@ -515,7 +515,7 @@ def get_current_weather():
     rows = conn.execute(stmnt)
 
     for row in rows:
-        currentweather = CurrentWeatherRow(list(row), is_row = True).values() # Convert the list into a CurrentWeatherRow instance
+        currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
         current_weather.append(currentweather)
     print("Found weather: {}".format(current_weather))
     return current_weather
