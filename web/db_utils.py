@@ -5,6 +5,7 @@ import os
 import sys
 import datetime
 from .utils import group_by, clean_type
+from datetime import datetime
 
 # Opening JSON file
 file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secure/credentials.json")
@@ -12,7 +13,7 @@ f = open(file_path)
 data = json.load(f)
 
 DEV = os.getenv("DBIKE_DEV") == "True"
-#DEV = os.getenv("DBIKE_DEV", "False") == "True"
+DEV = os.getenv("DBIKE_DEV", "False") == "True"
 
 if DEV:
     URI = "127.0.0.1"
@@ -390,18 +391,21 @@ def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
 
 
 def get_availabilities(start_timestamp: int, end_timestamp: int):
-    start_timestamp = start_timestamp if start_timestamp is not None else 0
-    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
+    # Assuming the timestamps are in seconds, convert them to datetime objects
+    start_datetime = datetime.utcfromtimestamp(start_timestamp if start_timestamp is not None else 0).isoformat() + 'Z'
+    end_datetime = datetime.utcfromtimestamp(
+        end_timestamp if end_timestamp is not None else sys.maxsize).isoformat() + 'Z'
+
     availabilities = []
     table = AvailabilityRow.table
     rows = conn.execute(sqla.select(table)
-                        .where(table.c.LastUpdated >= start_timestamp)
-                        .where(table.c.LastUpdated <= end_timestamp)
+                        .where(table.c.LastUpdated >= start_datetime)
+                        .where(table.c.LastUpdated <= end_datetime)
                         )
 
     for row in rows:
         availability = AvailabilityRow(list(row), is_sql=True).values()
-        availabilities .append(availability)
+        availabilities.append(availability)
     print("Found availabilities: {}".format(availabilities))
     return availabilities
 
@@ -414,17 +418,36 @@ def insert_availabilities(rows: list[AvailabilityRow]) -> list[AvailabilityRow]:
     except Exception as e:
         raise "Failed to insert rows: {}".format(e)
 
+
 def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: int):
-    start_timestamp = start_timestamp if start_timestamp is not None else 0
-    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
-    table = AvailabilityRow.table
-    result = conn.execute(sqla.delete(AvailabilityRow.table)
-                          .where((table.c.StationId == station_id) &
-                                 get_availability                 (table.c.LastUpdated >= start_timestamp) &
-                                 (table.c.LastUpdated <= end_timestamp)))
-    conn.commit()
-    print("Deleted rows: {}".format(result.rowcount))
-    return result.rowcount
+    # Convert timestamps to datetime strings
+    start_datetime = datetime.utcfromtimestamp(
+        start_timestamp).isoformat() + 'Z' if start_timestamp is not None else "1970-01-01T00:00:00Z"
+    end_datetime = datetime.utcfromtimestamp(
+        end_timestamp).isoformat() + 'Z' if end_timestamp is not None else "9999-12-31T23:59:59Z"
+
+    # First, fetch the IDs of rows that match the station ID and have LastUpdated within the time range
+    query = sqla.select(table.c.Id).where(
+        (table.c.StationId == station_id) &
+        (table.c.LastUpdated >= start_datetime) &
+        (table.c.LastUpdated <= end_datetime)
+    )
+
+    rows_to_delete = conn.execute(query).fetchall()
+
+    # Extract row IDs
+    row_ids = [row[0] for row in rows_to_delete]
+
+    if row_ids:
+        # Then, delete these rows based on their IDs
+        delete_query = sqla.delete(table).where(table.c.Id.in_(row_ids))
+        result = conn.execute(delete_query)
+        conn.commit()
+        print(f"Deleted rows: {result.rowcount}")
+        return result.rowcount
+    else:
+        print("No matching rows found to delete.")
+        return 0
 
 #endregion AVAILABILITY QUERIES
 
@@ -443,12 +466,7 @@ def station_rows_from_list(objs: list):
         rows.append(row)
     return rows
 
-def hourly_weather_rows_from_list(objs: list):
-    rows = []
-    for o in objs:
-        row = StationRow(o)
-        rows.append(row)
-    return rows
+
 
 def hourly_weather_rows_from_list(objs: list):
     rows = []
@@ -457,18 +475,9 @@ def hourly_weather_rows_from_list(objs: list):
         rows.append(row)
     return rows
 
-def get_date_weather(date: datetime.date):
-    table = DailyWeatherRow.table
-    query = sqla.select(table).where(sqla.func.date(table.c.ForecastDate) == date)
-    results = conn.execute(query).fetchall()
-    if results:
-        return [DailyWeatherRow(result, is_sql=True) for result in results]
-    else:
-        return []
-
 def get_current_weather():
     table = CurrentWeatherRow.table
-    query = sqla.select(table).order_by(table.c.DateTime.desc()).limit(1)
+    query = sqla.select(table).order_by(table.c.DateTime.desc())
     result = conn.execute(query).fetchone()
     if result:
         return CurrentWeatherRow(result, is_sql=True)
