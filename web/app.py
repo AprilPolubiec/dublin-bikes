@@ -30,6 +30,13 @@ def get_availabilities():
 def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
     db_utils.get_availability(station_id, start_time, end_time)
 
+@app.route('/current-weather')
+def get_current_weather():
+    # db_utils.get_current_weather()
+    current_weather = db_utils.get_current_weather()
+    return current_weather
+
+
 # @app.teardown_appcontext
 # def close_connection(exception):
 #     db_utils.close()

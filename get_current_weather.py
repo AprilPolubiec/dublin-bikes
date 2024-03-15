@@ -1,4 +1,5 @@
 import requests
+import sqlalchemy as sqla
 import json
 import datetime
 import sys
@@ -39,3 +40,4 @@ if response.status_code == 200:
     insert_row(current_row, CurrentWeatherRow.table)
 else:
     print('Failed to retrieve weather data')
+
