@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request
 
-from . import db_utils as db_utils
+from . import db_utils1 as db_utils
 import os
 import json
-import datetime
+from datetime import datetime
+
+
+
 
 
 
@@ -33,13 +36,12 @@ def get_station(station_id):
     return station
 
 
-#endregion
 
 #startregion AVAILABILITY QUERIES
 
 
 
-@app.route('/availability/<int:station_id>/')
+@app.route('/availability/<int:station_id>')
 def get_availability(
         station_id):  # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
     start_time = request.args.get('start_time')
@@ -54,6 +56,7 @@ def get_availabilities():
     end_time = request.args.get('end_time')
     availabilities = db_utils.get_availabilities(start_time,end_time)
     return availabilities
+get_availabilities
 
 
 @app.route('/weather/')
@@ -61,14 +64,11 @@ def get_current_weather():
     weather = db_utils.get_current_weather()
     return weather
 
-@app.route('/weather/<datetime.date:date>/')
+@app.route('/weather/<string:date>/')
 def get_forecast_weather(date):
     weather = db_utils.get_date_weather(date)
-
     return weather
 
-
-#endregion AVAILABILITY QUERIES
 
 
 
