@@ -11,7 +11,7 @@ file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 f = open(file_path)
 data = json.load(f)
 
-DEV = os.environ["DBIKE_DEV"] == "True"
+DEV = os.getenv("DBIKE_DEV", "False") == "True"
 if DEV:
     URI = "127.0.0.1"
 else:
