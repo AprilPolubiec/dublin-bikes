@@ -340,7 +340,8 @@ def insert_stations(rows: list[StationRow]):
         cache_data(StationRow)
         return res
     except Exception as e:
-        raise "Failed to insert rows: {}".format(e)
+        close()
+        print("Failed to insert rows: {}".format(e.message))
 
 def update_station(row: StationRow) -> StationRow:
     result = update_row(row, StationRow.table)
@@ -389,7 +390,8 @@ def insert_availabilities(rows: list[AvailabilityRow]) -> list[AvailabilityRow]:
     try:
         return insert_rows(rows, AvailabilityRow.table)
     except Exception as e:
-        raise "Failed to insert rows: {}".format(e)
+        close()
+        print("Failed to insert rows: {}".format(e))
 
 def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: int):
     start_timestamp = start_timestamp if start_timestamp is not None else 0
