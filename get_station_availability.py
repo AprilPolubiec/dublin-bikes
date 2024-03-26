@@ -35,7 +35,6 @@ def get_realtime_data():
                 "latitude": d["position"]["latitude"], # TODO: the DB is cutting off the decimal - fix
                 "longitude": d["position"]["longitude"], # TODO: the DB is cutting off the decimal - fix
                 "address": d["address"],
-                "zip": "000000", # TODO: remove
                 "city": "Dublin",
                 "accepts_cards": d["banking"],
                 "total_stands": d["totalStands"]["capacity"],

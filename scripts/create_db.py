@@ -41,7 +41,6 @@ if confirm_create_station == data["DB_PASSWORD"]:
             PositionLatitude VARCHAR(45) NULL,
             PositionLongitude VARCHAR(45) NULL,
             Address VARCHAR(45) NULL,
-            ZipCode VARCHAR(45) NULL,
             City VARCHAR(45) NULL,
             AcceptsCard INT NULL,
             TotalStands INT NULL,
