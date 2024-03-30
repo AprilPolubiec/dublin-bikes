@@ -22,13 +22,20 @@ def get_stations():
 def get_station(station_id):
     db_utils.get_station(station_id)
 
+@app.route('/availability/<int:station_id>')
+def get_availability(station_id):
+    start_time = request.args.get('start_time')
+    end_time = request.args.get('end_time')
+
+    availability = db_utils.get_availability(station_id, start_time, end_time)
+    return availability
+
 @app.route('/availability')
 def get_availabilities():
-    db_utils.get_availabilities()
-
-@app.route('/availability/<int:station_id>/')
-def get_availability(station_id): # TODO COM-46: needs to expect the following query params: stationId, startTime, endTime
-    db_utils.get_availability(station_id, start_time, end_time)
+    start_time = request.args.get('start_time')
+    end_time = request.args.get('end_time')
+    availabilities = db_utils.get_availabilities(start_time,end_time)
+    return availabilities
 
 @app.route('/current-weather')
 def get_current_weather():
