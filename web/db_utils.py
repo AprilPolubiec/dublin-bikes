@@ -1,6 +1,5 @@
 import sqlalchemy as sqla
-from sqlalchemy import select
-from sqlalchemy import desc
+from sqlalchemy import select, desc, func
 import json
 import csv
 import os
@@ -368,19 +367,34 @@ def delete_stations(ids: list[int]) -> list[int]:
 #endregion
     
 #startregion AVAILABILITY QUERIES
-def get_availability(station_id: str, start_timestamp: int, end_timestamp: int):
-    start_timestamp = start_timestamp if start_timestamp is not None else 0
-    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
+def get_availability(station_id: str):
+    table = AvailabilityRow.table
+    availability = conn.execute(sqla.select(table)
+                        .where(table.c.StationId == station_id)
+                        .order_by(table.c.LastUpdated.desc())
+                    ).fetchone()
+    print("Found availability: {}".format(availability))
+    return availability
+
+def get_availabilities():
     availabilities = []
     table = AvailabilityRow.table
-    rows = conn.execute(sqla.select(table)
-                        .where(table.c.StationId == station_id)
-                        .where(table.c.LastUpdated >= start_timestamp)
-                        .where(table.c.LastUpdated <= end_timestamp)
-                    )
+    subq = select(
+        table.c.StationId, 
+        func.max(table.c.LastUpdated).label("LastUpdated")).group_by(table.c.StationId).subquery()
+    stmt = select(
+        table.c.StationId, 
+        table.c.Status,
+        table.c.MechanicalBikesAvailable,
+        table.c.ElectricBikesAvailable, 
+        table.c.StandsAvailable,
+        subq.c.LastUpdated).join(subq, sqla.and_(
+            table.c.StationId == subq.c.StationId, table.c.LastUpdated == subq.c.LastUpdated))
+    rows = conn.execute(stmt).all()
     for row in rows:
-        availabilities.append(AvailabilityRow(row, is_sql=True))
-    print("Found availabilities: {}".format(availabilities))
+        availability = AvailabilityRow(list(row), is_sql = True).values()
+        availabilities.append(availability)
+    # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
     return availabilities
 
 def insert_availability(row: AvailabilityRow) -> AvailabilityRow:

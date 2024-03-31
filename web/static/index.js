@@ -1,4 +1,4 @@
-import { getStations } from './db_queries.js';
+import { getAvailabilities, getStations } from './db_queries.js';
 
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
@@ -36,6 +36,13 @@ async function initMap() {
   
     var markerBounds = new google.maps.LatLngBounds();
     const stations = await getStations();
+    const availabilities = await getAvailabilities();
+    console.log(availabilities)
+    const availabilityByStation = availabilities.reduce((acc, val) => {
+      acc[val.StationId] = val;
+      return acc;
+    }, {})
+
     for (const station of stations) {
         const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude))
 
@@ -45,11 +52,10 @@ async function initMap() {
             title: station.Name,
             fillColor: "#99ff33"
         });
-// TODO: clustering https://developers.google.com/maps/documentation/javascript/examples/marker-clustering
-// TODO: use advanced markers
+        const availability = availabilityByStation[station.Id];
         const contentString =
             '<div class="infowindow-content">' +
-            "<p><b>Availability: </b> 0 " +
+            `<p><b>Availability: </b> ${availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable}` +
             "</div>";
       const infowindow = new google.maps.InfoWindow({
         content: contentString,

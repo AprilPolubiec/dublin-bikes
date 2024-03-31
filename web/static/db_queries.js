@@ -5,10 +5,6 @@ export function getStation(stationId) {
     return fetch(`/station/${stationId}`).then(d => d.json());
 }
 
-export function getAvailability(stationId, startTime, endTime) {
-    return fetch("/availability?" + new URLSearchParams({
-        stationId,
-        startTime,
-        endTime,
-    }));
+export function getAvailabilities() {
+    return fetch(`/availability`).then(d => d.json());
 }
