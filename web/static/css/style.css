@@ -58,11 +58,87 @@ body {
 #results {
     overflow: scroll;
     height: 50vh;
+    display: none;
+    height: 100%;
+    font-size: 12px;
+}
+
+.adp-maneuver, .adp-summary {
+    color: var(--pico-color);
+}
+
+#results > td {
+    padding: 5px;
+    border-bottom: unset;
+}
+
+.adp-warnbox {
+    display: none;
+}
+
+#back-button {
+    position: absolute;
+    left: 11px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+#back-button:hover {
+    opacity: 0.5;
 }
 
 #map [role=button], #map [type=button],
 #map [role=button]:hover, #map [type=button]:hover {
     background-color: unset!important;
     border: unset!important;
+}
+
+#current-weather {
+    cursor: pointer;
+}
+
+#current-weather:hover {
+    background-color: var(--pico-primary-background);
+}
+
+#weather-details {
+    visibility: hidden;
+    width: 500px;
+    height: 150px;
+    position: absolute;
+    right: 0px;
+    z-index: 1;
+    overflow-x: scroll;
+    background-color: var(--pico-background-color);
+    box-shadow: -7px 8px 14px -4px rgba(0,0,0,0.75);
+    -webkit-box-shadow: -7px 8px 14px -4px rgba(0,0,0,0.75);
+    -moz-box-shadow: -7px 8px 14px -4px rgba(0,0,0,0.75);
+}
+
+::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--pico-color);
+}
+
+#weather-details > div {
+    display: flex;
+}
+
+.forecast-time {
+    /* font-size: 0.7rem; */
+}
+
+.weather-details-el {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 10px;
+    padding-right: 20px;
+    border-right: 1px solid;
 }
 /* END SECTION */

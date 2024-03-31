@@ -1,4 +1,8 @@
 
+from web.db_utils import (
+    get_availability,
+    get_availabilities
+)
 class DBRow:
     def __init__(self, name):
         self.name=name
@@ -20,3 +24,5 @@ if r1 == r2:
     print("equal")
 else:
     print("not equal")
+
+print(get_availabilities())
