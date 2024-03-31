@@ -3,6 +3,7 @@ import { getAvailabilities, getCurrentWeather, getHourlyForecast, getStations } 
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
+// Inserts a google maps Autocomplete in the element with the given elId
 function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
   // https://developers.google.com/maps/documentation/javascript/place-autocomplete#javascript_5
   // Create a bounding box with sides ~10km away from the center point
@@ -12,7 +13,7 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
     east: dublinCoordinates.lng + 0.1,
     west: dublinCoordinates.lng - 0.1,
   };
-  const start_input = document.getElementById(elId);
+  const inputEl = document.getElementById(elId);
   const options = {
     bounds: defaultBounds,
     componentRestrictions: { country: 'ie' },
@@ -21,7 +22,7 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
     // fields: ["address_components", "geometry", "icon", "name"],
     strictBounds: false,
   };
-  return new google.maps.places.Autocomplete(start_input, options);
+  return new google.maps.places.Autocomplete(inputEl, options);
 }
 
 async function initMap() {
@@ -68,13 +69,36 @@ async function initMap() {
     markerBounds.extend(position);
   }
   map.fitBounds(markerBounds);
-  
+  const start_location = addDestinationAutocompleteInputs(dublinCoordinates, 'start-location');
+  const end_location = addDestinationAutocompleteInputs(dublinCoordinates, 'end-location');
+
   const directionsService = new google.maps.DirectionsService();
   const markerCluster = new markerClusterer.MarkerClusterer({ markers, map });
 
+  const directionsRenderers = [
+    new google.maps.DirectionsRenderer({
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: 'red',
+      },
+    }),
+    new google.maps.DirectionsRenderer({
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: 'blue',
+      },
+    }),
+    new google.maps.DirectionsRenderer({
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: 'blue',
+      },
+    }),
+  ];
+
   const backButton = document.getElementById('back-button');
-  const resultsEl = document.getElementById("results");
-  const formEl = document.getElementById("search-form");
+  const resultsEl = document.getElementById('results');
+  const formEl = document.getElementById('search-form');
 
   backButton.addEventListener('click', () => {
     resultsEl.style.display = 'none';
@@ -83,10 +107,14 @@ async function initMap() {
       marker.setMap(map);
     }
     markerCluster.addMarkers(markers);
-  })
+  
+    for (const renderer of directionsRenderers) {
+      renderer.setMap(null);
+    }
+  });
 
   document.getElementById('search-form').onsubmit = (e) => {
-    getDirections(e, directionsService, map, stations, start_location, end_location)
+    getDirections(e, directionsRenderers, directionsService, map, stations, start_location, end_location);
     for (const marker of markers) {
       marker.setMap(null);
     }
@@ -114,23 +142,22 @@ async function renderCurrentWeather() {
 
   weatherEl.append(iconEl, tempEl);
 
-
   const hourlyForecastResponse = await getHourlyForecast(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
   let today = new Date();
   const dateString = today.toISOString().split('T')[0];
   const todaysForecast = hourlyForecastResponse['list'].filter((f) => f['dt_txt'].includes(dateString));
   const weatherDetailsEl = document.getElementById('weather-details');
   const weatherDetailsContainerEl = weatherDetailsEl.children[0];
-  
+
   todaysForecast.forEach((forecast) => {
     const containerEl = document.createElement('div');
-    containerEl.className = "weather-details-el";
+    containerEl.className = 'weather-details-el';
     const timeEl = document.createElement('small');
-    timeEl.className = "forecast-time";
+    timeEl.className = 'forecast-time';
     const date = new Date(forecast['dt_txt']);
     const hour = date.getHours();
     timeEl.innerText = hour > 12 ? `${hour - 12}pm` : `${hour}am`;
-  
+
     const iconEl = document.createElement('img');
     const { icon, description } = forecast['weather'][0];
     iconEl.src = `https://openweathermap.org/img/wn/${icon}.png`;
@@ -145,7 +172,7 @@ async function renderCurrentWeather() {
   weatherEl.addEventListener('click', () => {
     const currentVisibility = weatherDetailsEl.style.visibility;
     weatherDetailsEl.style.visibility = currentVisibility == 'visible' ? 'hidden' : 'visible';
-  })
+  });
 }
 
 function getClosestStation(placeGeometry, stations) {
@@ -165,25 +192,20 @@ function getClosestStation(placeGeometry, stations) {
 }
 
 // https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-directions
-function getDirections(e, directionsService, map, stations, start_location, end_location) {
+function getDirections(e, directionsRenderers, directionsService, map, stations, start_location, end_location) {
   e.preventDefault();
   console.log(e, start_location, end_location);
   const start_place = start_location.getPlace();
   const end_place = end_location.getPlace();
+
   //  TODO: make these take over the entire nav and add a back button to go back to the search
   const closest_start_station = getClosestStation(start_place.geometry.location, stations);
   const closest_end_station = getClosestStation(end_place.geometry.location, stations);
   // const closest_start_station = {lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude)}
   // const closest_end_station = {lat: parseFloat(stations[1].PositionLatitude), lng: parseFloat(stations[1].PositionLongitude)}
   // Get walking directions from start location to the start station
-  const firstLegRenderer = new google.maps.DirectionsRenderer({
-    map: map,
-    preserveViewport: true,
-    // suppressMarkers: true,
-    polylineOptions: {
-      strokeColor: 'red',
-    },
-  });
+  const firstLegRenderer = directionsRenderers[0];
+  firstLegRenderer.setMap(map);
   firstLegRenderer.setPanel(document.getElementById('leg1Panel'));
   directionsService.route(
     {
@@ -201,16 +223,8 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   );
 
   // Get bike directions from start station to end station
-  const secondLegRenderer = new google.maps.DirectionsRenderer(
-    new google.maps.DirectionsRenderer({
-      map: map,
-      preserveViewport: true,
-      // suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: 'blue',
-      },
-    })
-  );
+  const secondLegRenderer = directionsRenderers[1];
+  secondLegRenderer.setMap(map);
   secondLegRenderer.setPanel(document.getElementById('leg2Panel'));
   directionsService.route(
     {
@@ -228,16 +242,8 @@ function getDirections(e, directionsService, map, stations, start_location, end_
   );
 
   // Get walking directions from end station to destination
-  const thirdLegRenderer = new google.maps.DirectionsRenderer(
-    new google.maps.DirectionsRenderer({
-      map: map,
-      preserveViewport: true,
-      // suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: 'red',
-      },
-    })
-  );
+  const thirdLegRenderer = directionsRenderers[2];
+  thirdLegRenderer.setMap(map);
   thirdLegRenderer.setPanel(document.getElementById('leg3Panel'));
   directionsService.route(
     {
@@ -254,9 +260,9 @@ function getDirections(e, directionsService, map, stations, start_location, end_
     }
   );
 
-  const resultsEl = document.getElementById("results");
+  const resultsEl = document.getElementById('results');
   resultsEl.style.display = 'block';
-  const formEl = document.getElementById("search-form");
+  const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
 }
 
