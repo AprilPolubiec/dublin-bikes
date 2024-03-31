@@ -76,6 +76,15 @@ body {
     display: none;
 }
 
+.adp-text {
+    padding: 0;
+    border: none;
+}
+
+#results img {
+    max-width: unset;
+}
+
 #back-button {
     position: absolute;
     left: 11px;

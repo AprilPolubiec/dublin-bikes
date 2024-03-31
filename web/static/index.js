@@ -78,20 +78,23 @@ async function initMap() {
   const directionsRenderers = [
     new google.maps.DirectionsRenderer({
       preserveViewport: true,
+      suppressBicyclingLayer: true,
       polylineOptions: {
         strokeColor: 'red',
       },
     }),
     new google.maps.DirectionsRenderer({
       preserveViewport: true,
+      suppressBicyclingLayer: true,
       polylineOptions: {
         strokeColor: 'blue',
       },
     }),
     new google.maps.DirectionsRenderer({
       preserveViewport: true,
+      suppressBicyclingLayer: true,
       polylineOptions: {
-        strokeColor: 'blue',
+        strokeColor: 'red',
       },
     }),
   ];
@@ -194,15 +197,12 @@ function getClosestStation(placeGeometry, stations) {
 // https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-directions
 function getDirections(e, directionsRenderers, directionsService, map, stations, start_location, end_location) {
   e.preventDefault();
-  console.log(e, start_location, end_location);
   const start_place = start_location.getPlace();
   const end_place = end_location.getPlace();
 
-  //  TODO: make these take over the entire nav and add a back button to go back to the search
   const closest_start_station = getClosestStation(start_place.geometry.location, stations);
   const closest_end_station = getClosestStation(end_place.geometry.location, stations);
-  // const closest_start_station = {lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude)}
-  // const closest_end_station = {lat: parseFloat(stations[1].PositionLatitude), lng: parseFloat(stations[1].PositionLongitude)}
+  
   // Get walking directions from start location to the start station
   const firstLegRenderer = directionsRenderers[0];
   firstLegRenderer.setMap(map);
@@ -216,6 +216,10 @@ function getDirections(e, directionsRenderers, directionsService, map, stations,
     (response, status) => {
       if (status === 'OK') {
         firstLegRenderer.setDirections(response);
+        const title = document.getElementById("leg1-title");
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Walk ${distance} (${time})`
       } else {
         window.alert('Directions request failed due to ' + status);
       }
@@ -235,6 +239,10 @@ function getDirections(e, directionsRenderers, directionsService, map, stations,
     (response, status) => {
       if (status === 'OK') {
         secondLegRenderer.setDirections(response);
+        const title = document.getElementById("leg2-title");
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Bike ${distance} (${time})`
       } else {
         window.alert('Directions request failed due to ' + status);
       }
@@ -254,6 +262,10 @@ function getDirections(e, directionsRenderers, directionsService, map, stations,
     (response, status) => {
       if (status === 'OK') {
         thirdLegRenderer.setDirections(response);
+        const title = document.getElementById("leg3-title");
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Walk ${distance} (${time})`
       } else {
         window.alert('Directions request failed due to ' + status);
       }

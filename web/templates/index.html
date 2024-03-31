@@ -19,10 +19,6 @@
       <div id="weather-details">
         <div></div>
       </div>
-      <!-- <hgroup>
-        <h2>Dublin Bike Finder</h2>
-        <p>Lick sellotape cat mojo making bread</p>
-      </hgroup> -->
       <div id="content">
         <div class="container left" id="sidebar">
           <div id="search-panel">
@@ -42,18 +38,19 @@
           <div id="results">
             <i id="back-button" class="fa fa-chevron-left"></i>
             <h5>Suggested Route</h5>
-            <div id="leg1Panel"></div>
-            <div id="leg2Panel"></div>
-            <div id="leg3Panel"></div>
-            <!-- <details>
-                <summary>Route 1</summary>
+            <details open>
+                <summary id="leg1-title"></summary>
                 <div id="leg1Panel"></div>
-              </details> -->
+              </details>
+            <details closed>
+                <summary id="leg2-title"></summary>
+                <div id="leg2Panel"></div>
+              </details>
+            <details closed>
+                <summary id="leg3-title"></summary>
+                <div id="leg3Panel"></div>
+              </details>
 
-            <!-- <details open>
-                <summary>Route</summary>
-                <div id="directionsPanel"></div>
-              </details> -->
             <!-- <span aria-busy="true">Generating your link...</span>
               <progress></progress> -->
             <!-- TODO modals https://picocss.com/docs/modal -->
