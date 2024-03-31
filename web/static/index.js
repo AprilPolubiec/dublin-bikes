@@ -31,9 +31,6 @@ async function initMap() {
     center: dublinCoordinates,
   });
 
-  const start_location = addDestinationAutocompleteInputs(dublinCoordinates, 'start-location');
-  const end_location = addDestinationAutocompleteInputs(dublinCoordinates, 'end-location');
-
   var markerBounds = new google.maps.LatLngBounds();
   var markers = [];
   const stations = await getStations();
@@ -71,9 +68,30 @@ async function initMap() {
     markerBounds.extend(position);
   }
   map.fitBounds(markerBounds);
+  
   const directionsService = new google.maps.DirectionsService();
-  document.getElementById('search-form').onsubmit = (e) => getDirections(e, directionsService, map, stations, start_location, end_location);
-  new markerClusterer.MarkerClusterer({ markers, map });
+  const markerCluster = new markerClusterer.MarkerClusterer({ markers, map });
+
+  const backButton = document.getElementById('back-button');
+  const resultsEl = document.getElementById("results");
+  const formEl = document.getElementById("search-form");
+
+  backButton.addEventListener('click', () => {
+    resultsEl.style.display = 'none';
+    formEl.style.display = 'block';
+    for (const marker of markers) {
+      marker.setMap(map);
+    }
+    markerCluster.addMarkers(markers);
+  })
+
+  document.getElementById('search-form').onsubmit = (e) => {
+    getDirections(e, directionsService, map, stations, start_location, end_location)
+    for (const marker of markers) {
+      marker.setMap(null);
+    }
+    markerCluster.clearMarkers();
+  };
 
   renderCurrentWeather();
 }
@@ -236,7 +254,10 @@ function getDirections(e, directionsService, map, stations, start_location, end_
     }
   );
 
-  console.log(start_place, end_place);
+  const resultsEl = document.getElementById("results");
+  resultsEl.style.display = 'block';
+  const formEl = document.getElementById("search-form");
+  formEl.style.display = 'none';
 }
 
 window.initMap = initMap;
