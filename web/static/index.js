@@ -33,9 +33,11 @@ async function initMap() {
 
     const start_location = addDestinationAutocompleteInputs(dublinCoordinates, "start-location")
     const end_location = addDestinationAutocompleteInputs(dublinCoordinates, "end-location")
-  
+
     var markerBounds = new google.maps.LatLngBounds();
+    var markers = [];
     const stations = await getStations();
+  
     const availabilities = await getAvailabilities();
     console.log(availabilities)
     const availabilityByStation = availabilities.reduce((acc, val) => {
@@ -45,13 +47,14 @@ async function initMap() {
 
     for (const station of stations) {
         const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude))
-
         const marker = new google.maps.Marker({
             position,
             map,
             title: station.Name,
             fillColor: "#99ff33"
         });
+        markers.push(marker);
+
         const availability = availabilityByStation[station.Id];
         const contentString =
             '<div class="infowindow-content">' +
@@ -73,7 +76,7 @@ async function initMap() {
     map.fitBounds(markerBounds);
     const directionsService = new google.maps.DirectionsService();
     document.getElementById("search-form").onsubmit = (e) => getDirections(e, directionsService, map, stations, start_location, end_location)
-
+    new markerClusterer.MarkerClusterer({ markers, map });
 }
 
 function getClosestStation(placeGeometry, stations) {
