@@ -1,5 +1,4 @@
 import { getAvailabilities, getCurrentWeather, getHourlyForecast, getStations } from './db_queries.js';
-
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
@@ -30,6 +29,12 @@ async function initMap() {
     zoom: 6,
     center: dublinCoordinates,
   });
+  const markerIcon = {
+    url: 'web/static/bicycle-1054.png',
+    scaledSize: new google.maps.Size(32, 32), // Icon size
+    origin: new google.maps.Point(0, 0), // Icon origin
+    anchor: new google.maps.Point(16, 32) // Anchor point
+};
 
   var markerBounds = new google.maps.LatLngBounds();
   var markers = [];
@@ -43,10 +48,12 @@ async function initMap() {
   }, {});
 
   for (const station of stations) {
+    
     const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
     const marker = new google.maps.Marker({
       position,
       map,
+      icon: markerIcon,
       title: station.Name,
       fillColor: '#99ff33',
     });
