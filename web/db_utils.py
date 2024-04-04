@@ -116,7 +116,7 @@ class StationRow(DBRow):
                 self.TotalStands = obj["total_stands"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
-        print("Created station row: {}".format(self))
+        # print("Created station row: {}".format(self))
 
 class CurrentWeatherRow(DBRow):
     table_name = "CurrentWeather"
@@ -159,7 +159,7 @@ class CurrentWeatherRow(DBRow):
                 # self.Snow1h = obj["snow_1h"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
-        print("Created CurrentWeather row: {}".format(self))
+        # print("Created CurrentWeather row: {}".format(self))
 
 class DailyWeatherRow(DBRow):
     table_name = "DailyWeather"
@@ -200,7 +200,7 @@ class DailyWeatherRow(DBRow):
                 self.Snow = None if "snow" not in obj.keys() else obj["snow"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
-        print("Created DailyWeatherRow row: {}".format(self))
+        # print("Created DailyWeatherRow row: {}".format(self))
 class HourlyWeatherRow(DBRow):
     table_name = "HourlyWeather"
     table = sqla.Table(table_name, sqla.MetaData(), autoload_with=engine)
@@ -240,7 +240,7 @@ class HourlyWeatherRow(DBRow):
                 self.Snow1h = None if "snow_1h" not in obj.keys() else obj["snow_1h"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
-        print("Created HourlyWeatherRow row: {}".format(self))
+        # print("Created HourlyWeatherRow row: {}".format(self))
 
 class AvailabilityRow(DBRow):
     table_name = "Availability"
@@ -267,7 +267,7 @@ class AvailabilityRow(DBRow):
                 self.LastUpdated = obj["last_updated"]
             except TypeError:
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
-        print("Created availability row: {}".format(self.values()))
+        # print("Created availability row: {}".format(self.values()))
 
 def close():
     print("Closing connection...")
@@ -327,7 +327,7 @@ def get_stations():
     for row in rows:
         station = StationRow(list(row), is_sql=True).values() # Convert the list into a StationRow instance
         stations.append(station)
-    print("Found stations: {}".format(stations))
+    # print("Found stations: {}".format(stations))
     return stations
 
 def insert_station(row: StationRow):
@@ -373,9 +373,10 @@ def get_availability(station_id: str):
                         .where(table.c.StationId == station_id)
                         .order_by(table.c.LastUpdated.desc())
                     ).fetchone()
-    print("Found availability: {}".format(availability))
+    # print("Found availability: {}".format(availability))
     return availability
 
+# For each station, gets its current availability
 def get_availabilities():
     availabilities = []
     table = AvailabilityRow.table
@@ -390,6 +391,17 @@ def get_availabilities():
         table.c.StandsAvailable,
         subq.c.LastUpdated).join(subq, sqla.and_(
             table.c.StationId == subq.c.StationId, table.c.LastUpdated == subq.c.LastUpdated))
+    rows = conn.execute(stmt).all()
+    for row in rows:
+        availability = AvailabilityRow(list(row), is_sql = True).values()
+        availabilities.append(availability)
+    # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
+    return availabilities
+
+def get_historical_availabilities(station_id, qty):
+    availabilities = []
+    table = AvailabilityRow.table
+    stmt = select(table).where(table.c.StationId == station_id).order_by(table.c.LastUpdated.desc()).limit(qty)
     rows = conn.execute(stmt).all()
     for row in rows:
         availability = AvailabilityRow(list(row), is_sql = True).values()
@@ -535,6 +547,16 @@ def get_current_weather():
         current_weather.append(currentweather)
     print("Found weather: {}".format(current_weather))
     return current_weather
+
+def get_historical_weather(qty):
+    historical_weather = []
+    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.DateTime)).limit(qty)
+    rows = conn.execute(stmnt)
+
+    for row in rows:
+        currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
+        historical_weather.append(currentweather)
+    return historical_weather
 
 
 #select(user_table).order_by(user_table.c.name) but replace user_table

@@ -5,6 +5,7 @@ def load_model(pkl_filename):
     with open(pkl_filename, 'rb') as file:
         model = pickle.load(file)
     return model
+
 # Updated function to include station_id and predicted_time
 def predict_bike_availability(station_id, predicted_time, features):
     model = load_model('bike_availability_models.pkl')
