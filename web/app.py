@@ -99,6 +99,60 @@ def get_predicted_availability(station_id):
         "forecast": forecast,
     }
 
+@app.route("/predicted-availabilities")
+# @functools.lru_cache(maxsize=128)
+def get_predicted_availabilities():
+    prediction_date = request.args.get("date_timestamp", type=float)
+    # Get the forecast for the date & time
+    try:
+        forecast = db_utils.get_weather_forecast(prediction_date)
+        print("forecast: ", forecast)
+    except Exception as e:
+        print("failed: ", e)
+        return e, 400
+    
+    feels_like = forecast["FeelsLike"]
+    humidity = forecast["Humidity"]
+    pressure = forecast["Pressure"]
+    temperature = forecast["Temperature"]
+
+    day = datetime.datetime.fromtimestamp(prediction_date).day
+    month = datetime.datetime.fromtimestamp(prediction_date).month
+    hour = datetime.datetime.fromtimestamp(prediction_date).hour
+    minute = datetime.datetime.fromtimestamp(prediction_date).minute
+    is_weekday = 1 if day >= 0 and day <= 4 else 0
+    cold_weather = 1 if forecast["Temperature"] < 5 else 0
+    windy_weather = 1 if forecast["WindSpeed"] > 8 else 0
+    x_values = [
+        [
+            feels_like,
+            humidity,
+            pressure,
+            temperature,
+            day,
+            month,
+            hour,
+            is_weekday,
+            minute,
+            cold_weather,
+            windy_weather,
+        ]
+    ]
+    res = {
+        "forecast": forecast,
+        "predictions": {}
+    }
+
+    stations = db_utils.get_stations()
+    for station in stations:
+        pkl_filename = f"model_{station['Id']}.pkl"
+        with open(f"../models/linear-v1/{pkl_filename}", "rb") as file:
+            model = pickle.load(file)
+    
+        prediction = model.predict(x_values)
+        res["predictions"][station["Id"]] = str(round(prediction[0]))
+    return res
+
 
 # @app.route("/tandsAvailable_avg_data/<int:StationId>")
 # @functools.lru_cache(maxsize=128)
