@@ -24,7 +24,6 @@ def get_availability_on_the_hour(availabilities: list):
     return cleaned_availabilities
 
 def load_data():
-
     stations = get_stations()
     station_ids = [s["Id"] for s in stations]
 
