@@ -25,7 +25,19 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
   return new google.maps.places.Autocomplete(inputEl, options);
 }
 
+function initPage() {
+  var now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const departureTimeInputEl = document.getElementById('departure-time');
+  departureTimeInputEl.value = now.toISOString().slice(0,16);
+  departureTimeInputEl.min = now.toISOString().slice(0,16);
+  var maxDate = new Date(now);
+  maxDate.setDate(now.getDate() + 4);
+  departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
+}
+
 async function initMap() {
+  initPage();
   const dublinCoordinates = { lat: DUBLIN_LATITUDE, lng: DUBLIN_LONGITUDE };
   const map = new google.maps.Map(document.getElementById('map'), {
     zoom: 6,
