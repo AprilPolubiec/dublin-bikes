@@ -105,7 +105,12 @@ def predict_for_future_date(StationId, days_from_today, predicted_hour):
         'Pressure',
         'Temperature',
         'WeatherId',
-        'WindSpeed'
+        'WindSpeed',
+        'minute_y',
+        'is_weekday',
+        'is_busy_hours',
+        'cold_weather',
+        'windy_weather'
     ]
 
     # Initialize a DataFrame with columns specified in A. This is for ensuring compatibility with the model's input requirements.
