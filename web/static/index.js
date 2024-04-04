@@ -56,17 +56,27 @@ async function initMap() {
   }, {});
 
   for (const station of stations) {
+    const availability = availabilityByStation[station.Id];
+    const bikesAvailable = availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable;
+    const standsAvailable = availability.StandsAvailable;
     const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
     const marker = new google.maps.Marker({
       position,
       map,
       title: station.Name,
-      fillColor: '#99ff33',
+      label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
     });
     markers.push(marker);
 
-    const availability = availabilityByStation[station.Id];
-    const contentString = '<div class="infowindow-content">' + `<p><b>Availability: </b> ${availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable}` + '</div>';
+
+    const contentString = '<div class="infowindow-content">' + 
+    `<div class="header">` + 
+    `<div>` +
+    `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
+    `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
+    `<span>${standsAvailable} stands</span>` +
+    `</div>` +
+    '</div>';
     const infowindow = new google.maps.InfoWindow({
       content: contentString,
       ariaLabel: station.Name,
