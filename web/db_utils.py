@@ -7,6 +7,11 @@ import sys
 import datetime
 from .utils import group_by, clean_type
 
+import logging
+
+# Disable SQLAlchemy INFO logs
+logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+
 # Opening JSON file
 file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secure/credentials.json")
 f = open(file_path)
