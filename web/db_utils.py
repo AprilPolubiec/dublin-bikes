@@ -571,4 +571,17 @@ def get_historical_weather(days):
             historical_weather.append(currentweather)
         return historical_weather
 
+def get_weather_forecast(forecast_dt: int):
+    with engine.connect() as conn:
+        dt_object = datetime.datetime.fromtimestamp(forecast_dt).replace(minute=0, second=0, microsecond=0)
+        # Find the most recent forecast for this time
+        table = HourlyWeatherRow.table
+        stmnt = select(table).where(table.c.ForecastDate == dt_object).order_by(table.c.DateTime.desc()).limit(1)
+        rows = conn.execute(stmnt)
+        for row in rows:
+            res = HourlyWeatherRow(list(row), is_sql = True).values()
+        if res == None:
+            raise Exception("No forecasts found")
+        return res
+
 #endregion
