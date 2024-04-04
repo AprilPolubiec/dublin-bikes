@@ -13,6 +13,7 @@ f = open(file_path)
 data = json.load(f)
 
 DEV = os.getenv("DBIKE_DEV", "False") == "True"
+print(DEV)
 if DEV:
     URI = "127.0.0.1"
 else:
@@ -27,8 +28,8 @@ engine = sqla.create_engine(
     echo=True,
 )
 caching_enabled = True
-print("Starting connection...")
-conn = engine.connect()
+# print("Starting connection...")
+# conn = engine.connect()
 
 class DBRow:
     columns = []
@@ -269,10 +270,6 @@ class AvailabilityRow(DBRow):
                 raise "Attempted to create row from object but a different type was received. If creating from a list, make sure to set is_sql = True"
         # print("Created availability row: {}".format(self.values()))
 
-def close():
-    print("Closing connection...")
-    conn.close()
-
 def disable_caching():
     global caching_enabled
     caching_enabled = False
@@ -283,52 +280,58 @@ def enable_caching():
 
 #startregion DB FUNCTIONS
 def insert_row(row: DBRow, table: sqla.Table):
-    conn.execute(sqla.insert(table), row.values())
-    print("Inserting row: {}".format(row))
-    conn.commit()
-    return row
+    with engine.connect() as conn:
+        conn.execute(sqla.insert(table), row.values())
+        print("Inserting row: {}".format(row))
+        conn.commit()
+        return row
 
 def insert_rows(rows: list[DBRow], table: sqla.Table):
-    conn.execute(sqla.insert(table), [
-            r.values() for r in rows
-    ])
-    print("Inserting rows: {}".format(rows))
-    conn.commit()
-    return rows
+    with engine.connect() as conn:
+        conn.execute(sqla.insert(table), [
+                r.values() for r in rows
+        ])
+        print("Inserting rows: {}".format(rows))
+        conn.commit()
+        return rows
 
 def update_row(row: DBRow, table: sqla.Table):
-    id = row.Id
-    conn.execute(sqla.update(table).where(table.c.Id == id).values(row.values()))
-    print("Updating row: {}".format(row))
-    conn.commit()
-    return row
+    with engine.connect() as conn:
+        id = row.Id
+        conn.execute(sqla.update(table).where(table.c.Id == id).values(row.values()))
+        print("Updating row: {}".format(row))
+        conn.commit()
+        return row
 
 def delete_row(id: int, table: sqla.Table):
-    conn.execute(sqla.delete(table).where(table.c.Id == id))
-    print("Deleting row: {}".format(id))
-    conn.commit()
-    return id
+    with engine.connect() as conn:
+        conn.execute(sqla.delete(table).where(table.c.Id == id))
+        print("Deleting row: {}".format(id))
+        conn.commit()
+        return id
 #endregion
 
 # startregion STATION QUERIES
 def get_station(station_id: str):
-    table = StationRow.table  
-    rows = conn.execute(sqla.select(table).where(table.c.Id == station_id)).all()
-    if len(rows) > 1:
-        raise "Found more than one station with id {}".format(station_id)
-    print("Found station: {}".format(rows[0]))
-    return StationRow(rows[0], is_sql=True)
+    with engine.connect() as conn:
+        table = StationRow.table  
+        rows = conn.execute(sqla.select(table).where(table.c.Id == station_id)).all()
+        if len(rows) > 1:
+            raise "Found more than one station with id {}".format(station_id)
+        print("Found station: {}".format(rows[0]))
+        return StationRow(rows[0], is_sql=True)
 
 def get_stations():
-    stations = []
-    stmnt = sqla.select(StationRow.table)
-    rows = conn.execute(stmnt)
-    
-    for row in rows:
-        station = StationRow(list(row), is_sql=True).values() # Convert the list into a StationRow instance
-        stations.append(station)
-    # print("Found stations: {}".format(stations))
-    return stations
+    with engine.connect() as conn:
+        stations = []
+        stmnt = sqla.select(StationRow.table)
+        rows = conn.execute(stmnt)
+        
+        for row in rows:
+            station = StationRow(list(row), is_sql=True).values() # Convert the list into a StationRow instance
+            stations.append(station)
+        # print("Found stations: {}".format(stations))
+        return stations
 
 def insert_station(row: StationRow):
     return insert_row(row, StationRow.table)
@@ -339,7 +342,6 @@ def insert_stations(rows: list[StationRow]):
         cache_data(StationRow)
         return res
     except Exception as e:
-        close()
         print("Failed to insert rows: {}".format(e.message))
 
 def update_station(row: StationRow) -> StationRow:
@@ -368,46 +370,50 @@ def delete_stations(ids: list[int]) -> list[int]:
     
 #startregion AVAILABILITY QUERIES
 def get_availability(station_id: str):
-    table = AvailabilityRow.table
-    availability = conn.execute(sqla.select(table)
-                        .where(table.c.StationId == station_id)
-                        .order_by(table.c.LastUpdated.desc())
-                    ).fetchone()
-    # print("Found availability: {}".format(availability))
-    return availability
+    with engine.connect() as conn:
+        table = AvailabilityRow.table
+        availability = conn.execute(sqla.select(table)
+                            .where(table.c.StationId == station_id)
+                            .order_by(table.c.LastUpdated.desc())
+                        ).fetchone()
+        # print("Found availability: {}".format(availability))
+        return availability
 
 # For each station, gets its current availability
 def get_availabilities():
-    availabilities = []
-    table = AvailabilityRow.table
-    subq = select(
-        table.c.StationId, 
-        func.max(table.c.LastUpdated).label("LastUpdated")).group_by(table.c.StationId).subquery()
-    stmt = select(
-        table.c.StationId, 
-        table.c.Status,
-        table.c.MechanicalBikesAvailable,
-        table.c.ElectricBikesAvailable, 
-        table.c.StandsAvailable,
-        subq.c.LastUpdated).join(subq, sqla.and_(
-            table.c.StationId == subq.c.StationId, table.c.LastUpdated == subq.c.LastUpdated))
-    rows = conn.execute(stmt).all()
-    for row in rows:
-        availability = AvailabilityRow(list(row), is_sql = True).values()
-        availabilities.append(availability)
-    # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
-    return availabilities
+    with engine.connect() as conn:
+        availabilities = []
+        table = AvailabilityRow.table
+        subq = select(
+            table.c.StationId, 
+            func.max(table.c.LastUpdated).label("LastUpdated")).group_by(table.c.StationId).subquery()
+        stmt = select(
+            table.c.StationId, 
+            table.c.Status,
+            table.c.MechanicalBikesAvailable,
+            table.c.ElectricBikesAvailable, 
+            table.c.StandsAvailable,
+            subq.c.LastUpdated).join(subq, sqla.and_(
+                table.c.StationId == subq.c.StationId, table.c.LastUpdated == subq.c.LastUpdated))
+        rows = conn.execute(stmt).all()
+        for row in rows:
+            availability = AvailabilityRow(list(row), is_sql = True).values()
+            availabilities.append(availability)
+        # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
+        return availabilities
 
-def get_historical_availabilities(station_id, qty):
-    availabilities = []
-    table = AvailabilityRow.table
-    stmt = select(table).where(table.c.StationId == station_id).order_by(table.c.LastUpdated.desc()).limit(qty)
-    rows = conn.execute(stmt).all()
-    for row in rows:
-        availability = AvailabilityRow(list(row), is_sql = True).values()
-        availabilities.append(availability)
-    # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
-    return availabilities
+def get_historical_availabilities(station_id, days):
+    with engine.connect() as conn:
+        availabilities = []
+        table = AvailabilityRow.table
+        min_date = datetime.datetime.now() - datetime.timedelta(days)
+        stmnt = select(table).where(table.c.StationId == station_id).where(func.DATE(table.c.LastUpdated) >= min_date)
+        rows = conn.execute(stmnt).all()
+        for row in rows:
+            availability = AvailabilityRow(list(row), is_sql = True).values()
+            availabilities.append(availability)
+        # print("Found {} availabilities: {}".format(len(availabilities), availabilities))
+        return availabilities
 
 def insert_availability(row: AvailabilityRow) -> AvailabilityRow:
     return insert_row(row, AvailabilityRow.table)
@@ -416,20 +422,20 @@ def insert_availabilities(rows: list[AvailabilityRow]) -> list[AvailabilityRow]:
     try:
         return insert_rows(rows, AvailabilityRow.table)
     except Exception as e:
-        close()
         print("Failed to insert rows: {}".format(e))
 
 def delete_availabilities(station_id: int, start_timestamp: int, end_timestamp: int):
-    start_timestamp = start_timestamp if start_timestamp is not None else 0
-    end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
-    table = AvailabilityRow.table
-    result = conn.execute(sqla.delete(AvailabilityRow.table)
-                          .where((table.c.StationId == station_id) & 
-                                 (table.c.LastUpdated >= start_timestamp) & 
-                                 (table.c.LastUpdated <= end_timestamp)))
-    conn.commit()
-    print("Deleted rows: {}".format(result.rowcount))
-    return result.rowcount
+    with engine.connect() as conn:
+        start_timestamp = start_timestamp if start_timestamp is not None else 0
+        end_timestamp = end_timestamp if end_timestamp is not None else sys.maxsize
+        table = AvailabilityRow.table
+        result = conn.execute(sqla.delete(AvailabilityRow.table)
+                            .where((table.c.StationId == station_id) & 
+                                    (table.c.LastUpdated >= start_timestamp) & 
+                                    (table.c.LastUpdated <= end_timestamp)))
+        conn.commit()
+        print("Deleted rows: {}".format(result.rowcount))
+        return result.rowcount
 
 #endregion AVAILABILITY QUERIES
 
@@ -537,30 +543,27 @@ def cache_data(row_type: StationRow):
     f.close()
 
 def get_current_weather():
-    # table = CurrentWeatherRow.table 
-    current_weather = []
-    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.DateTime)).limit(1)
-    rows = conn.execute(stmnt)
+    with engine.connect() as conn:
+        current_weather = []
+        stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.DateTime)).limit(1)
+        rows = conn.execute(stmnt)
 
-    for row in rows:
-        currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
-        current_weather.append(currentweather)
-    print("Found weather: {}".format(current_weather))
-    return current_weather
+        for row in rows:
+            currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
+            current_weather.append(currentweather)
+        print("Found weather: {}".format(current_weather))
+        return current_weather
 
-def get_historical_weather(qty):
-    historical_weather = []
-    stmnt = select(CurrentWeatherRow.table).order_by(desc(CurrentWeatherRow.table.c.DateTime)).limit(qty)
-    rows = conn.execute(stmnt)
+def get_historical_weather(days):
+    with engine.connect() as conn:
+        historical_weather = []
+        min_date = datetime.datetime.now() - datetime.timedelta(days)
+        stmnt = select(CurrentWeatherRow.table).where(func.DATE(CurrentWeatherRow.table.c.DateTime) >= min_date)
+        rows = conn.execute(stmnt)
 
-    for row in rows:
-        currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
-        historical_weather.append(currentweather)
-    return historical_weather
-
-
-#select(user_table).order_by(user_table.c.name) but replace user_table
-# print(stmnt)
-
+        for row in rows:
+            currentweather = CurrentWeatherRow(list(row), is_sql = True).values() # Convert the list into a CurrentWeatherRow instance
+            historical_weather.append(currentweather)
+        return historical_weather
 
 #endregion
