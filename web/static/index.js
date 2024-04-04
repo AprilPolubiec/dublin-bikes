@@ -1,4 +1,4 @@
-import { getAvailabilities, getCurrentWeather, getHourlyForecast, getPredictedAvailabilities, getStations } from './db_queries.js';
+import { getAvailabilities, getHistoricalAverageAvailabilities, getCurrentWeather, getHourlyForecast, getPredictedAvailabilities, getStations } from './db_queries.js';
 
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
@@ -29,8 +29,8 @@ function initPage() {
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   const departureTimeInputEl = document.getElementById('departure-time');
-  departureTimeInputEl.value = now.toISOString().slice(0,16);
-  departureTimeInputEl.min = now.toISOString().slice(0,16);
+  departureTimeInputEl.value = now.toISOString().slice(0, 16);
+  departureTimeInputEl.min = now.toISOString().slice(0, 16);
   var maxDate = new Date(now);
   maxDate.setDate(now.getDate() + 4);
   departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
@@ -68,20 +68,24 @@ async function initMap() {
     });
     markers.push(marker);
 
-
-    const contentString = '<div class="infowindow-content">' + 
-    `<div class="header">` + 
-    `<div>` +
-    `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
-    `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
-    `<span>${standsAvailable} stands</span>` +
-    `</div>` +
-    '</div>';
+    const contentString =
+      '<div class="infowindow-content">' +
+      `<div class="header">` +
+      `<div>` +
+      `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
+      `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
+      `<span>${standsAvailable} stands</span>` +
+      `</div>` +
+      `<canvas id="hourly-bike-chart-${station.Id}"></canvas>` +
+      `<canvas id="daily-bike-chart-${station.Id}"></canvas>` +
+      '</div>';
     const infowindow = new google.maps.InfoWindow({
       content: contentString,
       ariaLabel: station.Name,
     });
-
+    google.maps.event.addListener(infowindow, 'domready', function () {
+      renderChart(station.Id);
+    });
     marker.addListener('click', () => {
       infowindow.open({
         anchor: marker,
@@ -90,6 +94,7 @@ async function initMap() {
     });
     markerBounds.extend(position);
   }
+
   map.fitBounds(markerBounds);
   const start_location = addDestinationAutocompleteInputs(dublinCoordinates, 'start-location');
   const end_location = addDestinationAutocompleteInputs(dublinCoordinates, 'end-location');
@@ -149,6 +154,38 @@ async function initMap() {
   renderCurrentWeather();
 }
 
+async function renderChart(stationId) {
+  const t = document.getElementById(`chart-${stationId}`);
+  const data = await getHistoricalAverageAvailabilities(stationId);
+  const bike_data = data['bikes'];
+  const stand_data = data['bikes'];
+
+  new Chart(document.getElementById(`daily-bike-chart-${stationId}`), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(bike_data.days),
+      datasets: [
+        {
+          label: 'Bikes by day',
+          data: Object.values(bike_data.days),
+        },
+      ],
+    },
+  });
+  new Chart(document.getElementById(`hourly-bike-chart-${stationId}`), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(bike_data.hours),
+      datasets: [
+        {
+          label: 'Bikes by hour',
+          data: Object.values(bike_data.hours),
+        },
+      ],
+    },
+  });
+}
+
 async function renderCurrentWeather() {
   const response = await getCurrentWeather(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
   const currentWeather = response['weather'][0];
@@ -201,8 +238,15 @@ async function renderCurrentWeather() {
 }
 
 // Gets the closest station which will most likely have bikes
-function getRecommendedStation(placeGeometry, availabilities, stations) {
-  const { predictions } = availabilities;
+// TODO: should be looking for stands if it is a drop off
+// TODO: loading modal
+function getRecommendedStation(placeGeometry, availabilities, stations, availabilityType) {
+  let predictions;
+  if (availabilityType == 'stands') {
+    predictions = availabilities['stand_predictions'];
+  } else {
+    predictions = availabilities['bike_predictions'];
+  }
   let closestDistance = google.maps.geometry.spherical.computeDistanceBetween({ lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude) }, placeGeometry);
   let closestStation = stations[0];
   for (const stationId in predictions) {
@@ -230,8 +274,8 @@ function getDirections(e, directionsRenderers, directionsService, map, stations,
   const end_place = end_location.getPlace();
   let departureDateTime = document.getElementById('departure-time').value;
   getPredictedAvailabilities(departureDateTime).then((predicted_availabilites) => {
-    const closest_start_station = getRecommendedStation(start_place.geometry.location, predicted_availabilites, stations);
-    const closest_end_station = getRecommendedStation(end_place.geometry.location, predicted_availabilites, stations);
+    const closest_start_station = getRecommendedStation(start_place.geometry.location, predicted_availabilites, stations, 'bikes');
+    const closest_end_station = getRecommendedStation(end_place.geometry.location, predicted_availabilites, stations, 'stands');
 
     // Get walking directions from start location to the start station
     const firstLegRenderer = directionsRenderers[0];

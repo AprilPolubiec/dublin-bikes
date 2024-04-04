@@ -38,3 +38,6 @@ export function getPredictedAvailabilities(date) {
   let timestamp = new Date(date).getTime() / 1000;
   return fetch(`/predicted-availabilities?` + new URLSearchParams({ date_timestamp: timestamp })).then((d) => d.json());
 }
+export function getHistoricalAverageAvailabilities(stationId) {
+  return fetch(`/historical-availability/${stationId}`).then((d) => d.json());
+}

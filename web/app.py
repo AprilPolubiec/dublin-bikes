@@ -99,6 +99,7 @@ def get_predicted_availability(station_id):
         "forecast": forecast,
     }
 
+
 @app.route("/predicted-availabilities")
 # @functools.lru_cache(maxsize=128)
 def get_predicted_availabilities():
@@ -110,7 +111,7 @@ def get_predicted_availabilities():
     except Exception as e:
         print("failed: ", e)
         return e, 400
-    
+
     feels_like = forecast["FeelsLike"]
     humidity = forecast["Humidity"]
     pressure = forecast["Pressure"]
@@ -138,51 +139,96 @@ def get_predicted_availabilities():
             windy_weather,
         ]
     ]
-    res = {
-        "forecast": forecast,
-        "predictions": {}
-    }
+    res = {"forecast": forecast, "stand_predictions": {}, "bike_predictions": {}}
 
     stations = db_utils.get_stations()
     for station in stations:
         pkl_filename = f"model_{station['Id']}.pkl"
-        with open(f"../models/linear-v1/{pkl_filename}", "rb") as file:
+        with open(f"../models/stands-and-bikes/{pkl_filename}", "rb") as file:
             model = pickle.load(file)
-    
+
         prediction = model.predict(x_values)
-        res["predictions"][station["Id"]] = str(round(prediction[0]))
+        res["stand_predictions"][station["Id"]] = str(round(prediction[0][0]))
+        res["bike_predictions"][station["Id"]] = str(round(prediction[0][1]))
     return res
 
 
-# @app.route("/tandsAvailable_avg_data/<int:StationId>")
-# @functools.lru_cache(maxsize=128)
-# def StandsAvailable_avg_data(StationId):
-#     engine = ""
+# Utility function
+def to_date(date_str):
+    try:
+        dt = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+        return dt
+    except:
+        dt = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        return dt
 
-#     # Establish a connection to the database using the engine's connect method
-#     with engine.connect() as connection:
-#         # Execute an SQL query to fetch all columns from the Availability table for a specific StationId
-#         # and load the result into a DataFrame
-#         df = pd.read_sql_query(f"select * from Availability where StationId = {StationId} ;", connection)
-#         # Explicitly close the database connection (though it's automatically managed by the with context)
-#         connection.close()
 
-#         # Remove duplicate rows based on all columns, keeping only the first occurrence
-#         df = df.drop_duplicates(keep='first')
-#         # Convert the 'LastUpdated' column to datetime format for easier manipulation
-#         df['LastUpdated'] = pd.to_datetime(df['LastUpdated'])
-#         # Set the 'LastUpdated' column as the index of the DataFrame for time series analysis
-#         df = df.set_index('LastUpdated')
-#         # Resample the time series data into 10-minute bins and calculate the mean for each bin
-#         df = df.resample('10T').mean()
-#         # Group the data by hour of the day and calculate the average values for each group
-#         df = df.groupby(df.index.hour).mean()
-#         # Convert the 'available_bikes' column of the DataFrame into a JSON string with "split" orientation
-#         result = df['StandsAvailable'].to_json(orient="split")
-#         # Parse the JSON string back into a Python dictionary
-#         parsed = loads(result)
-#         # Convert the dictionary into a pretty-printed JSON string and return it
-#         return dumps(parsed, indent=4)
+@app.route("/historical-availability/<int:station_id>")
+def get_historical_availabilities(station_id):
+    historical_availability = db_utils.get_historical_availabilities(station_id, 30)
+
+    stands = {  # By hour
+        "hours": {},
+        # By day
+        "days": {
+            0: [],  # MON
+            1: [],  # TUE
+            2: [],  # WED
+            3: [],  # THURS
+            4: [],  # FRI
+            5: [],  # SAT
+            6: [],  # SUN
+        },
+    }
+    bikes = {  # By hour
+        "hours": {},
+        # By day
+        "days": {
+            0: [],  # MON
+            1: [],  # TUE
+            2: [],  # WED
+            3: [],  # THURS
+            4: [],  # FRI
+            5: [],  # SAT
+            6: [],  # SUN
+        },
+    }
+    for a in historical_availability:
+        date = to_date(a["LastUpdated"])
+        day_of_week = date.weekday()
+        hour = to_date(a["LastUpdated"]).hour
+
+        stands["days"][day_of_week].append(a["StandsAvailable"])
+        if hour not in stands["hours"].keys():
+            stands["hours"][hour] = []
+        stands["hours"][hour].append(a["StandsAvailable"])
+
+        if a["MechanicalBikesAvailable"] == None or a["ElectricBikesAvailable"] == None:
+            continue
+        bikes["days"][day_of_week].append(
+            a["MechanicalBikesAvailable"] + a["ElectricBikesAvailable"]
+        )
+        if hour not in bikes["hours"].keys():
+            bikes["hours"][hour] = []
+        bikes["hours"][hour].append(a["MechanicalBikesAvailable"] + a["ElectricBikesAvailable"])
+
+    for key in bikes["days"].keys():
+        avg = sum(bikes["days"][key]) / len(bikes["days"][key])
+        bikes["days"][key] = avg
+    
+    for key in stands["days"].keys():
+        avg = sum(stands["days"][key]) / len(stands["days"][key])
+        stands["days"][key] = avg
+
+    for key in bikes["hours"].keys():
+        avg = sum(bikes["hours"][key]) / len(bikes["hours"][key])
+        bikes["hours"][key] = avg
+    
+    for key in stands["hours"].keys():
+        avg = sum(stands["hours"][key]) / len(stands["hours"][key])
+        stands["hours"][key] = avg
+    
+    return {"bikes": bikes, "stands": stands}
 
 
 @app.route("/availability")
