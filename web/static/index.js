@@ -39,72 +39,46 @@ function initPage() {
   departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
 }
 
-async function initMap() {
-  initPage();
-  const dublinCoordinates = { lat: DUBLIN_LATITUDE, lng: DUBLIN_LONGITUDE };
-  const map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 6,
-    center: dublinCoordinates,
+function renderStation(station, availability, markers, markerBounds, map) {
+  const bikesAvailable = availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable;
+  const standsAvailable = availability.StandsAvailable;
+  const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
+  const marker = new google.maps.Marker({
+    position,
+    map,
+    title: station.Name,
+    label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
   });
+  markers.push(marker);
 
-  var markerBounds = new google.maps.LatLngBounds();
-  var markers = [];
-  const stations = await getStations();
-
-  const availabilities = await getAvailabilities();
-  console.log(availabilities);
-  const availabilityByStation = availabilities.reduce((acc, val) => {
-    acc[val.StationId] = val;
-    return acc;
-  }, {});
-
-  for (const station of stations) {
-    const availability = availabilityByStation[station.Id];
-    const bikesAvailable = availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable;
-    const standsAvailable = availability.StandsAvailable;
-    const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
-    const marker = new google.maps.Marker({
-      position,
+  const contentString =
+    '<div class="infowindow-content">' +
+    `<div class="header">` +
+    `<div>` +
+    `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
+    `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
+    `<span>${standsAvailable} stands</span>` +
+    `</div>` +
+    `<canvas id="hourly-bike-chart-${station.Id}"></canvas>` +
+    `<canvas id="daily-bike-chart-${station.Id}"></canvas>` +
+    '</div>';
+  const infowindow = new google.maps.InfoWindow({
+    content: contentString,
+    ariaLabel: station.Name,
+  });
+  google.maps.event.addListener(infowindow, 'domready', function () {
+    renderChart(station.Id);
+  });
+  marker.addListener('click', () => {
+    infowindow.open({
+      anchor: marker,
       map,
-      title: station.Name,
-      label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
     });
-    markers.push(marker);
+  });
+  markerBounds.extend(position);
+}
 
-    const contentString =
-      '<div class="infowindow-content">' +
-      `<div class="header">` +
-      `<div>` +
-      `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
-      `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
-      `<span>${standsAvailable} stands</span>` +
-      `</div>` +
-      `<canvas id="hourly-bike-chart-${station.Id}"></canvas>` +
-      `<canvas id="daily-bike-chart-${station.Id}"></canvas>` +
-      '</div>';
-    const infowindow = new google.maps.InfoWindow({
-      content: contentString,
-      ariaLabel: station.Name,
-    });
-    google.maps.event.addListener(infowindow, 'domready', function () {
-      renderChart(station.Id);
-    });
-    marker.addListener('click', () => {
-      infowindow.open({
-        anchor: marker,
-        map,
-      });
-    });
-    markerBounds.extend(position);
-  }
-
-  map.fitBounds(markerBounds);
-  const start_location = addDestinationAutocompleteInputs(dublinCoordinates, 'start-location');
-  const end_location = addDestinationAutocompleteInputs(dublinCoordinates, 'end-location');
-
-  const directionsService = new google.maps.DirectionsService();
-  const markerCluster = new markerClusterer.MarkerClusterer({ markers, map });
-
+function createDirectionsRenderers() {
   const directionsRenderers = [
     new google.maps.DirectionsRenderer({
       preserveViewport: true,
@@ -128,22 +102,32 @@ async function initMap() {
       },
     }),
   ];
+  return directionsRenderers;
+}
 
-  const backButton = document.getElementById('back-button');
+function clearMap(map, markers, directionsRenderers) {
   const resultsEl = document.getElementById('results');
   const formEl = document.getElementById('search-form');
+  resultsEl.style.display = 'none';
+  formEl.style.display = 'block';
+  for (const marker of markers) {
+    marker.setMap(map);
+  }
+  markerCluster.addMarkers(markers);
+
+  for (const renderer of directionsRenderers) {
+    renderer.setMap(null);
+  }
+}
+
+function createInputForm(markers, directionsRenderers, availabilities, stations, directionsService, map, dublinCoordinates) {
+  const start_location = addDestinationAutocompleteInputs(dublinCoordinates, 'start-location');
+  const end_location = addDestinationAutocompleteInputs(dublinCoordinates, 'end-location');
+
+  const backButton = document.getElementById('back-button');
 
   backButton.addEventListener('click', () => {
-    resultsEl.style.display = 'none';
-    formEl.style.display = 'block';
-    for (const marker of markers) {
-      marker.setMap(map);
-    }
-    markerCluster.addMarkers(markers);
-
-    for (const renderer of directionsRenderers) {
-      renderer.setMap(null);
-    }
+    clearMap(map, markers, directionsRenderers);
   });
 
   document.getElementById('search-form').onsubmit = (e) => {
@@ -154,8 +138,9 @@ async function initMap() {
     let departureDateTimeDateObj = new Date(departureDateTime);
     let now = new Date();
 
-    if (Math.abs(departureDateTimeDateObj.getTime() - now.getTime()) <= 15 * 60 * 1000) {
-      let availabilityObj = {"bikes": {}, "stands": {}}
+    if (Math.abs(departureDateTimeDateObj.getTime() - now.getTime()) <= 5 * 60 * 1000) {
+      // 5 minutes - use actual availability
+      let availabilityObj = { bikes: {}, stands: {} };
       availabilities.forEach((a) => {
         const bikes = a.MechanicalBikesAvailable + a.ElectricBikesAvailable;
         const stands = a.StandsAvailable;
@@ -163,16 +148,10 @@ async function initMap() {
         availabilityObj['stands'][a.StationId] = stands;
       });
 
-      const closest_start_station = getRecommendedStation(start_place.geometry.location, availabilityObj, stations, 'bikes');
-      const closest_end_station = getRecommendedStation(end_place.geometry.location, availabilityObj, stations, 'stands');
-
-      renderRoutes(start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map);
+      getRecommendedStationsAndRender(availabilityObj, start_place, end_place, stations, directionsRenderers, directionsService, map);
     } else {
       getPredictedAvailabilities(departureDateTime).then((a) => {
-        const closest_start_station = getRecommendedStation(start_place.geometry.location, a, stations, 'bikes');
-        const closest_end_station = getRecommendedStation(end_place.geometry.location, a, stations, 'stands');
-
-        renderRoutes(start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map);
+        getRecommendedStationsAndRender(a, start_place, end_place, stations, directionsRenderers, directionsService, map);
       });
     }
 
@@ -181,6 +160,76 @@ async function initMap() {
     }
     markerCluster.clearMarkers();
   };
+}
+
+function getRecommendedStationsAndRender(availabilities, start_place, end_place, stations, directionsRenderers, directionsService, map) {
+  const closest_start_station = getRecommendedStation(start_place.geometry.location, availabilities, stations, 'bikes');
+  const closest_end_station = getRecommendedStation(end_place.geometry.location, availabilities, stations, 'stands');
+  
+  if (closest_start_station == null || closest_end_station) {
+    const modal = document.getElementById('modal');
+    modal.open = true;
+  
+    const confirmButton = document.getElementById('confirmButton');
+    confirmButton.addEventListener('click', () => {
+      const start_station_coords = { lat: parseFloat(closest_start_station.PositionLatitude), lng: parseFloat(closest_start_station.PositionLongitude) };
+      const end_station_coords = { lat: parseFloat(closest_end_station.PositionLatitude), lng: parseFloat(closest_end_station.PositionLongitude) };
+  
+      renderRoutes(start_place, end_place, start_station_coords, end_station_coords, directionsRenderers, directionsService, map);
+      document.getElementById('modal').open = false;
+    });
+  
+    const cancelButton = document.getElementById('confirmButton');
+    cancelButton.addEventListener('click', () => {
+      const closest_start_station = getRecommendedStation(start_place.geometry.location, availabilities, stations, 'bikes', true);
+      const closest_end_station = getRecommendedStation(end_place.geometry.location, availabilities, stations, 'stands', true);
+      const start_station_coords = { lat: parseFloat(closest_start_station.PositionLatitude), lng: parseFloat(closest_start_station.PositionLongitude) };
+      const end_station_coords = { lat: parseFloat(closest_end_station.PositionLatitude), lng: parseFloat(closest_end_station.PositionLongitude) };
+  
+      renderRoutes(start_place, end_place, start_station_coords, end_station_coords, directionsRenderers, directionsService, map);
+      document.getElementById('modal').open = false;
+    });
+  }
+
+  if (closest_start_station && closest_end_station) {
+    const start_station_coords = { lat: parseFloat(closest_start_station.PositionLatitude), lng: parseFloat(closest_start_station.PositionLongitude) };
+    const end_station_coords = { lat: parseFloat(closest_end_station.PositionLatitude), lng: parseFloat(closest_end_station.PositionLongitude) };
+
+    renderRoutes(start_place, end_place, start_station_coords, end_station_coords, directionsRenderers, directionsService, map);
+  }
+}
+
+async function initMap() {
+  initPage();
+  const dublinCoordinates = { lat: DUBLIN_LATITUDE, lng: DUBLIN_LONGITUDE };
+  const map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 6,
+    center: dublinCoordinates,
+  });
+
+  var markerBounds = new google.maps.LatLngBounds();
+  var markers = [];
+  const stations = await getStations();
+
+  const availabilities = await getAvailabilities();
+  console.log(availabilities);
+  const availabilityByStation = availabilities.reduce((acc, val) => {
+    acc[val.StationId] = val;
+    return acc;
+  }, {});
+
+  for (const station of stations) {
+    const availability = availabilityByStation[station.Id];
+    renderStation(station, availability, markers, markerBounds, map);
+  }
+
+  map.fitBounds(markerBounds);
+
+  const directionsService = new google.maps.DirectionsService();
+  const directionsRenderers = createDirectionsRenderers();
+
+  const markerCluster = new markerClusterer.MarkerClusterer({ markers, map });
+  createInputForm(markers, directionsRenderers, availabilities, stations, directionsService, map, dublinCoordinates);
 
   renderCurrentWeather();
 }
@@ -271,7 +320,7 @@ async function renderCurrentWeather() {
 // Gets the closest station which will most likely have bikes
 // TODO: should be looking for stands if it is a drop off
 // TODO: loading modal
-function getRecommendedStation(placeGeometry, availabilities, stations, availabilityType) {
+function getRecommendedStation(placeGeometry, availabilities, stations, availabilityType, shouldIgnoreUnavailable) {
   let predictions;
   if (availabilityType == 'stands') {
     predictions = availabilities['stands'];
@@ -279,26 +328,30 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
     predictions = availabilities['bikes'];
   }
 
-  let closestDistance = google.maps.geometry.spherical.computeDistanceBetween({ lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude) }, placeGeometry);
-  let closestStation = stations[0];
-  for (const stationId in predictions) {
-    if (predictions[stationId] === 0) {
-      console.log(`Probably no bikes at station ${stationId} - skip`);
-      continue; // No bikes available
-    }
+  let predictionsByDistance = Object.entries(predictions).sort(([a, av], [b, bv]) => {
+    const stationA = stations.filter((s) => s.Id == a)[0];
+    const lngA = parseFloat(stationA.PositionLongitude);
+    const latA = parseFloat(stationA.PositionLatitude);
+    const distanceA = google.maps.geometry.spherical.computeDistanceBetween({ lat: latA, lng: lngA }, placeGeometry);
 
-    const station = stations.filter((s) => s.Id == stationId)[0];
-    const lng = parseFloat(station.PositionLongitude);
-    const lat = parseFloat(station.PositionLatitude);
-    const distance = google.maps.geometry.spherical.computeDistanceBetween({ lat, lng }, placeGeometry);
-    if (distance < closestDistance) {
-      closestDistance = distance;
-      closestStation = station;
-    }
+    const stationB = stations.filter((s) => s.Id == b)[0];
+    const lngB = parseFloat(stationB.PositionLongitude);
+    const latB = parseFloat(stationB.PositionLatitude);
+    const distanceB = google.maps.geometry.spherical.computeDistanceBetween({ lat: latB, lng: lngB }, placeGeometry);
+
+    return distanceA - distanceB;
+  });
+
+  const closestStationId = predictionsByDistance.filter(([k, v]) => v != 0)[0][0];
+  const closestStation = stations.filter((s) => s.Id == closestStationId)[0];
+  console.log('Sorted stations: ', predictionsByDistance);
+
+  if (predictionsByDistance[0][1] === 0 && !shouldIgnoreUnavailable) {
+    return null;
   }
-
-  return { lat: parseFloat(closestStation.PositionLatitude), lng: parseFloat(closestStation.PositionLongitude) };
+  return closestStation;
 }
+
 
 const renderRoutes = (start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map) => {
   // Get walking directions from start location to the start station
