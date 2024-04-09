@@ -147,7 +147,35 @@ async function initMap() {
   });
 
   document.getElementById('search-form').onsubmit = (e) => {
-    getDirections(e, directionsRenderers, directionsService, map, stations, start_location, end_location);
+    e.preventDefault();
+    const start_place = start_location.getPlace();
+    const end_place = end_location.getPlace();
+    let departureDateTime = document.getElementById('departure-time').value;
+    let departureDateTimeDateObj = new Date(departureDateTime);
+    let now = new Date();
+
+    if (Math.abs(departureDateTimeDateObj.getTime() - now.getTime()) <= 15 * 60 * 1000) {
+      let availabilityObj = {"bikes": {}, "stands": {}}
+      availabilities.forEach((a) => {
+        const bikes = a.MechanicalBikesAvailable + a.ElectricBikesAvailable;
+        const stands = a.StandsAvailable;
+        availabilityObj['bikes'][a.StationId] = bikes;
+        availabilityObj['stands'][a.StationId] = stands;
+      });
+
+      const closest_start_station = getRecommendedStation(start_place.geometry.location, availabilityObj, stations, 'bikes');
+      const closest_end_station = getRecommendedStation(end_place.geometry.location, availabilityObj, stations, 'stands');
+
+      renderRoutes(start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map);
+    } else {
+      getPredictedAvailabilities(departureDateTime).then((a) => {
+        const closest_start_station = getRecommendedStation(start_place.geometry.location, a, stations, 'bikes');
+        const closest_end_station = getRecommendedStation(end_place.geometry.location, a, stations, 'stands');
+
+        renderRoutes(start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map);
+      });
+    }
+
     for (const marker of markers) {
       marker.setMap(null);
     }
@@ -161,7 +189,7 @@ async function renderChart(stationId) {
   const t = document.getElementById(`chart-${stationId}`);
   const data = await getHistoricalAverageAvailabilities(stationId);
   const bike_data = data['bikes'];
-  const stand_data = data['bikes'];
+  const stand_data = data['stands'];
 
   new Chart(document.getElementById(`daily-bike-chart-${stationId}`), {
     type: 'bar',
@@ -246,10 +274,11 @@ async function renderCurrentWeather() {
 function getRecommendedStation(placeGeometry, availabilities, stations, availabilityType) {
   let predictions;
   if (availabilityType == 'stands') {
-    predictions = availabilities['stand_predictions'];
+    predictions = availabilities['stands'];
   } else {
-    predictions = availabilities['bike_predictions'];
+    predictions = availabilities['bikes'];
   }
+
   let closestDistance = google.maps.geometry.spherical.computeDistanceBetween({ lat: parseFloat(stations[0].PositionLatitude), lng: parseFloat(stations[0].PositionLongitude) }, placeGeometry);
   let closestStation = stations[0];
   for (const stationId in predictions) {
@@ -271,90 +300,80 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
   return { lat: parseFloat(closestStation.PositionLatitude), lng: parseFloat(closestStation.PositionLongitude) };
 }
 
-// https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-directions
-function getDirections(e, directionsRenderers, directionsService, map, stations, start_location, end_location) {
-  e.preventDefault();
-  const start_place = start_location.getPlace();
-  const end_place = end_location.getPlace();
-  let departureDateTime = document.getElementById('departure-time').value;
-  getPredictedAvailabilities(departureDateTime).then((predicted_availabilites) => {
-    const closest_start_station = getRecommendedStation(start_place.geometry.location, predicted_availabilites, stations, 'bikes');
-    const closest_end_station = getRecommendedStation(end_place.geometry.location, predicted_availabilites, stations, 'stands');
-
-    // Get walking directions from start location to the start station
-    const firstLegRenderer = directionsRenderers[0];
-    firstLegRenderer.setMap(map);
-    firstLegRenderer.setPanel(document.getElementById('leg1Panel'));
-    directionsService.route(
-      {
-        origin: { placeId: start_place.place_id },
-        destination: closest_start_station,
-        travelMode: google.maps.TravelMode.WALKING,
-      },
-      (response, status) => {
-        if (status === 'OK') {
-          firstLegRenderer.setDirections(response);
-          const title = document.getElementById('leg1-title');
-          const time = response['routes'][0]['legs'][0]['duration']['text'];
-          const distance = response['routes'][0]['legs'][0]['distance']['text'];
-          title.innerText = `Walk ${distance} (${time})`;
-        } else {
-          window.alert('Directions request failed due to ' + status);
-        }
+const renderRoutes = (start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map) => {
+  // Get walking directions from start location to the start station
+  const firstLegRenderer = directionsRenderers[0];
+  firstLegRenderer.setMap(map);
+  firstLegRenderer.setPanel(document.getElementById('leg1Panel'));
+  directionsService.route(
+    {
+      origin: { placeId: start_place.place_id },
+      destination: closest_start_station,
+      travelMode: google.maps.TravelMode.WALKING,
+    },
+    (response, status) => {
+      if (status === 'OK') {
+        firstLegRenderer.setDirections(response);
+        const title = document.getElementById('leg1-title');
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Walk ${distance} (${time})`;
+      } else {
+        window.alert('Directions request failed due to ' + status);
       }
-    );
+    }
+  );
 
-    // Get bike directions from start station to end station
-    const secondLegRenderer = directionsRenderers[1];
-    secondLegRenderer.setMap(map);
-    secondLegRenderer.setPanel(document.getElementById('leg2Panel'));
-    directionsService.route(
-      {
-        origin: closest_start_station,
-        destination: closest_end_station,
-        travelMode: google.maps.TravelMode.BICYCLING,
-      },
-      (response, status) => {
-        if (status === 'OK') {
-          secondLegRenderer.setDirections(response);
-          const title = document.getElementById('leg2-title');
-          const time = response['routes'][0]['legs'][0]['duration']['text'];
-          const distance = response['routes'][0]['legs'][0]['distance']['text'];
-          title.innerText = `Bike ${distance} (${time})`;
-        } else {
-          window.alert('Directions request failed due to ' + status);
-        }
+  // Get bike directions from start station to end station
+  const secondLegRenderer = directionsRenderers[1];
+  secondLegRenderer.setMap(map);
+  secondLegRenderer.setPanel(document.getElementById('leg2Panel'));
+  directionsService.route(
+    {
+      origin: closest_start_station,
+      destination: closest_end_station,
+      travelMode: google.maps.TravelMode.BICYCLING,
+    },
+    (response, status) => {
+      if (status === 'OK') {
+        secondLegRenderer.setDirections(response);
+        const title = document.getElementById('leg2-title');
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Bike ${distance} (${time})`;
+      } else {
+        window.alert('Directions request failed due to ' + status);
       }
-    );
+    }
+  );
 
-    // Get walking directions from end station to destination
-    const thirdLegRenderer = directionsRenderers[2];
-    thirdLegRenderer.setMap(map);
-    thirdLegRenderer.setPanel(document.getElementById('leg3Panel'));
-    directionsService.route(
-      {
-        origin: closest_end_station,
-        destination: { placeId: end_place.place_id },
-        travelMode: google.maps.TravelMode.WALKING,
-      },
-      (response, status) => {
-        if (status === 'OK') {
-          thirdLegRenderer.setDirections(response);
-          const title = document.getElementById('leg3-title');
-          const time = response['routes'][0]['legs'][0]['duration']['text'];
-          const distance = response['routes'][0]['legs'][0]['distance']['text'];
-          title.innerText = `Walk ${distance} (${time})`;
-        } else {
-          window.alert('Directions request failed due to ' + status);
-        }
+  // Get walking directions from end station to destination
+  const thirdLegRenderer = directionsRenderers[2];
+  thirdLegRenderer.setMap(map);
+  thirdLegRenderer.setPanel(document.getElementById('leg3Panel'));
+  directionsService.route(
+    {
+      origin: closest_end_station,
+      destination: { placeId: end_place.place_id },
+      travelMode: google.maps.TravelMode.WALKING,
+    },
+    (response, status) => {
+      if (status === 'OK') {
+        thirdLegRenderer.setDirections(response);
+        const title = document.getElementById('leg3-title');
+        const time = response['routes'][0]['legs'][0]['duration']['text'];
+        const distance = response['routes'][0]['legs'][0]['distance']['text'];
+        title.innerText = `Walk ${distance} (${time})`;
+      } else {
+        window.alert('Directions request failed due to ' + status);
       }
-    );
+    }
+  );
 
-    const resultsEl = document.getElementById('results');
-    resultsEl.style.display = 'block';
-    const formEl = document.getElementById('search-form');
-    formEl.style.display = 'none';
-  });
-}
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  const formEl = document.getElementById('search-form');
+  formEl.style.display = 'none';
+};
 
 window.initMap = initMap;

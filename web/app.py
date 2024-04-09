@@ -141,7 +141,7 @@ def get_predicted_availabilities():
             windy_weather,
         ]
     ]
-    res = {"forecast": forecast, "stand_predictions": {}, "bike_predictions": {}}
+    res = {"forecast": forecast, "stands": {}, "bikes": {}}
 
     stations = db_utils.get_stations()
     for station in stations:
@@ -150,8 +150,8 @@ def get_predicted_availabilities():
             model = pickle.load(file)
 
         prediction = model.predict(x_values)
-        res["stand_predictions"][station["Id"]] = str(round(prediction[0][0]))
-        res["bike_predictions"][station["Id"]] = str(round(prediction[0][1]))
+        res["stands"][station["Id"]] = str(round(prediction[0][0]))
+        res["bikes"][station["Id"]] = str(round(prediction[0][1]))
     return res
 
 
