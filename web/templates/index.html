@@ -2,7 +2,9 @@
 <html>
   <head>
     <title>Simple Marker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
@@ -13,22 +15,16 @@
         <ul>
           <li><strong>Bike Finder</strong></li>
         </ul>
-        <ul>
-          <li><a href="#" class="contrast">About</a></li>
-          <li><a href="#" class="contrast">Services</a></li>
-          <li><a href="#" class="contrast">Products</a></li>
-        </ul>
+        <ul id="current-weather"></ul>
       </nav>
-      <!-- <hgroup>
-        <h2>Dublin Bike Finder</h2>
-        <p>Lick sellotape cat mojo making bread</p>
-      </hgroup> -->
+      <div id="weather-details">
+        <div></div>
+      </div>
       <div id="content">
         <div class="container left" id="sidebar">
           <div id="search-panel">
             <form id="search-form">
               <fieldset>
-                <!-- TODO: placeholders -->
                 <input type="search" placeholder="From..." id="start-location" name="start-location" required />
                 <input type="search" placeholder="To..." id="end-location" name="end-location" required />
                 <label for="departure-time"
@@ -40,20 +36,40 @@
             </form>
           </div>
 
-          <div id="results">
-            <h5>Suggested Route</h5>
-            <div id="leg1Panel"></div>
-            <div id="leg2Panel"></div>
-            <div id="leg3Panel"></div>
-            <!-- <details>
-                <summary>Route 1</summary>
-                <div id="leg1Panel"></div>
-              </details> -->
+          <dialog id="modal">
+            <article>
+              <h2>Predicted unavailability at nearest bike stations</h2>
+              <p>
+                According to our predictions, one or more bike stations in this route will be 
+                unavailable at this time due to lack of bikes to pick up or lack of stands to park at. Would
+                you like to proceed using the next nearest bike stand or ignore predictions and include unavailable
+                stations?
+              </p>
+              <footer>
+                <button className="secondary" id="cancelButton">
+                  Include unavailable stations
+                </button>
+                <button id="confirmButton">Use next nearest station</button>
+              </footer>
+            </article>
+          </dialog>
 
-            <!-- <details open>
-                <summary>Route</summary>
-                <div id="directionsPanel"></div>
-              </details> -->
+          <div id="results">
+            <i id="back-button" class="fa fa-chevron-left"></i>
+            <h5>Suggested Route</h5>
+            <details open>
+                <summary id="leg1-title"></summary>
+                <div id="leg1Panel"></div>
+              </details>
+            <details closed>
+                <summary id="leg2-title"></summary>
+                <div id="leg2Panel"></div>
+              </details>
+            <details closed>
+                <summary id="leg3-title"></summary>
+                <div id="leg3Panel"></div>
+              </details>
+
             <!-- <span aria-busy="true">Generating your link...</span>
               <progress></progress> -->
             <!-- TODO modals https://picocss.com/docs/modal -->
@@ -62,6 +78,7 @@
         <div class="container right" id="map"></div>
       </div>
     </main>
+    <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ apiKey }}&libraries=places,geometry,marker&callback=initMap&v=weekly" defer></script>
   </body>
 </html>
