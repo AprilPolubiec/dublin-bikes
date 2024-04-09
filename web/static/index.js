@@ -3,6 +3,9 @@ import { getAvailabilities, getHistoricalAverageAvailabilities, getCurrentWeathe
 const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
+// TODO: can't take bikes from 12-5
+// TODO: alert that 0 are found and will look for the next closest
+
 // Inserts a google maps Autocomplete in the element with the given elId
 function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
   // https://developers.google.com/maps/documentation/javascript/place-autocomplete#javascript_5
@@ -254,7 +257,8 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
       console.log(`Probably no bikes at station ${stationId} - skip`);
       continue; // No bikes available
     }
-    const station = stations.filter((s) => s.Id === stationId);
+
+    const station = stations.filter((s) => s.Id == stationId)[0];
     const lng = parseFloat(station.PositionLongitude);
     const lat = parseFloat(station.PositionLatitude);
     const distance = google.maps.geometry.spherical.computeDistanceBetween({ lat, lng }, placeGeometry);

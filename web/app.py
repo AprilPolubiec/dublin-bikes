@@ -30,8 +30,10 @@ def get_stations():
 
 @app.route("/stations/<int:station_id>")
 def get_station(station_id):
-    db_utils.get_station(station_id)
-
+    try:
+        db_utils.get_station(station_id)
+    except Exception as e:
+        return f"failed to get station: {e}", 500
 
 @app.route("/predicted-availability/<int:station_id>")
 # @functools.lru_cache(maxsize=128)
