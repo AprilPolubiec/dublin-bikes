@@ -48,15 +48,25 @@ async function initMap() {
   }, {});
 
   for (const station of stations) {
-    
     const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
+    
+    // Define the marker icon
+    const markerIcon = {
+        url: 'your_image_url.png', // Replace 'your_image_url.png' with the URL of your custom marker image
+        scaledSize: new google.maps.Size(40, 40) // Adjust the size if needed
+    };
+
+    // Create the marker with custom icon
     const marker = new google.maps.Marker({
-      position,
-      map,
-      icon: markerIcon,
-      title: station.Name,
-      fillColor: '#99ff33',
+        position: position,
+        map: map,
+        icon: markerIcon,
+        title: station.Name,
+        fillColor: '#99ff33', // This property doesn't directly affect the marker, you may remove it if unnecessary
     });
+
+    // Push the marker to an array if needed
+    markers.push(marker);
     markers.push(marker);
 
     const availability = availabilityByStation[station.Id];
