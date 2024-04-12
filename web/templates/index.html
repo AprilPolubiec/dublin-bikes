@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Simple Marker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
@@ -19,10 +20,6 @@
       <div id="weather-details">
         <div></div>
       </div>
-      <!-- <hgroup>
-        <h2>Dublin Bike Finder</h2>
-        <p>Lick sellotape cat mojo making bread</p>
-      </hgroup> -->
       <div id="content">
         <div class="container left" id="sidebar">
           <div id="search-panel">
@@ -39,21 +36,40 @@
             </form>
           </div>
 
+          <dialog id="modal">
+            <article>
+              <h2>Predicted unavailability at nearest bike stations</h2>
+              <p>
+                According to our predictions, one or more bike stations in this route will be 
+                unavailable at this time due to lack of bikes to pick up or lack of stands to park at. Would
+                you like to proceed using the next nearest bike stand or ignore predictions and include unavailable
+                stations?
+              </p>
+              <footer>
+                <button className="secondary" id="cancelButton">
+                  Include unavailable stations
+                </button>
+                <button id="confirmButton">Use next nearest station</button>
+              </footer>
+            </article>
+          </dialog>
+
           <div id="results">
             <i id="back-button" class="fa fa-chevron-left"></i>
             <h5>Suggested Route</h5>
-            <div id="leg1Panel"></div>
-            <div id="leg2Panel"></div>
-            <div id="leg3Panel"></div>
-            <!-- <details>
-                <summary>Route 1</summary>
+            <details open>
+                <summary id="leg1-title"></summary>
                 <div id="leg1Panel"></div>
-              </details> -->
+              </details>
+            <details closed>
+                <summary id="leg2-title"></summary>
+                <div id="leg2Panel"></div>
+              </details>
+            <details closed>
+                <summary id="leg3-title"></summary>
+                <div id="leg3Panel"></div>
+              </details>
 
-            <!-- <details open>
-                <summary>Route</summary>
-                <div id="directionsPanel"></div>
-              </details> -->
             <!-- <span aria-busy="true">Generating your link...</span>
               <progress></progress> -->
             <!-- TODO modals https://picocss.com/docs/modal -->
