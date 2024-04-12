@@ -48,6 +48,10 @@ function renderStation(station, availability, markers, markerBounds, map) {
     map,
     title: station.Name,
     label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
+    icon: {
+      url: 'http://127.0.0.1:5000/static/marker-icon.webp',
+      scaledSize: new google.maps.Size(32, 32) // Adjust the size as needed
+    }
   });
   markers.push(marker);
 
