@@ -201,6 +201,7 @@ async function initMap() {
   const map = new google.maps.Map(document.getElementById('map'), {
     zoom: 6,
     center: dublinCoordinates,
+    mapId: '2b6cc70d33cd984e',
   });
 
   var markerBounds = new google.maps.LatLngBounds();
