@@ -50,7 +50,7 @@ function renderStation(station, availability, markers, markerBounds, map) {
     label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
     icon: {
       url: 'http://127.0.0.1:5000/static/marker-icon.webp',
-      scaledSize: new google.maps.Size(32, 32) // Adjust the size as needed
+      scaledSize: new google.maps.Size(32, 32) 
     }
   });
   markers.push(marker);
