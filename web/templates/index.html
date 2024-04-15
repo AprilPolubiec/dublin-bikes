@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Marker</title>
+    <title>Dublin Bikes App</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
@@ -33,6 +33,7 @@
                 </label>
               </fieldset>
               <button type="submit">Search</button>
+              <span id="loader" aria-busy="true" style="display: none;">Generating routes...</span>
             </form>
           </div>
 

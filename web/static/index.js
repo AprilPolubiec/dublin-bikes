@@ -132,6 +132,8 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
   document.getElementById('search-form').onsubmit = (e) => {
     e.preventDefault();
+    const loaderEl = document.getElementById("loader");
+    loaderEl.style.display = "block";
     const start_place = start_location.getPlace();
     const end_place = end_location.getPlace();
     let departureDateTime = document.getElementById('departure-time').value;
@@ -459,6 +461,8 @@ const renderRoutes = (start_place, end_place, closest_start_station, closest_end
   resultsEl.style.display = 'block';
   const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
+  const loaderEl = document.getElementById("loader");
+  loaderEl.style.display = "none";
 };
 
 window.initMap = initMap;
