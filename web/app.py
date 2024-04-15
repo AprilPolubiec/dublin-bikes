@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from . import db_utils as db_utils
+import db_utils as db_utils
 import os
 import json
 import pickle
@@ -250,4 +250,4 @@ def get_current_weather():
 #     db_utils.close()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8000)
