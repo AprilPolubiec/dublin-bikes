@@ -4,7 +4,6 @@ const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
 // TODO: can't take bikes from 12-5
-// TODO: alert that 0 are found and will look for the next closest
 
 // Inserts a google maps Autocomplete in the element with the given elId
 function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
@@ -47,7 +46,7 @@ function renderStation(station, availability, markers, markerBounds, map) {
     position,
     map,
     title: station.Name,
-    label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
+    label: bikesAvailable.toString(),
   });
   markers.push(marker);
 
@@ -132,6 +131,8 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
   document.getElementById('search-form').onsubmit = (e) => {
     e.preventDefault();
+    const loaderEl = document.getElementById("loader");
+    loaderEl.style.display = "block";
     const start_place = start_location.getPlace();
     const end_place = end_location.getPlace();
     let departureDateTime = document.getElementById('departure-time').value;
@@ -244,7 +245,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by day',
-          data: Object.values(bike_data.days),
+          data: Object.values(bike_data.days).map(d => Math.floor(d)),
         },
       ],
     },
@@ -256,7 +257,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by hour',
-          data: Object.values(bike_data.hours),
+          data: Object.values(bike_data.hours).map(d => Math.floor(d)),
         },
       ],
     },
@@ -459,6 +460,8 @@ const renderRoutes = (start_place, end_place, closest_start_station, closest_end
   resultsEl.style.display = 'block';
   const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
+  const loaderEl = document.getElementById("loader");
+  loaderEl.style.display = "none";
 };
 
 window.initMap = initMap;
