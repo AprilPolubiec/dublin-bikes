@@ -27,7 +27,7 @@ if DEV:
 else:
     URI = "dublin-bikes-db.cnyo8auy4q4b.us-east-1.rds.amazonaws.com"  # TODO: add dev env variables
 
-PORT = 3307
+PORT = 3306
 DB = "dublin-bikes"
 USER = "admin"
 
