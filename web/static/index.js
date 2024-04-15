@@ -4,7 +4,6 @@ const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
 // TODO: can't take bikes from 12-5
-// TODO: alert that 0 are found and will look for the next closest
 
 // Inserts a google maps Autocomplete in the element with the given elId
 function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
@@ -47,7 +46,7 @@ function renderStation(station, availability, markers, markerBounds, map) {
     position,
     map,
     title: station.Name,
-    label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
+    label: bikesAvailable.toString(),
   });
   markers.push(marker);
 
@@ -246,7 +245,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by day',
-          data: Object.values(bike_data.days),
+          data: Object.values(bike_data.days).map(d => Math.floor(d)),
         },
       ],
     },
@@ -258,7 +257,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by hour',
-          data: Object.values(bike_data.hours),
+          data: Object.values(bike_data.hours).map(d => Math.floor(d)),
         },
       ],
     },
