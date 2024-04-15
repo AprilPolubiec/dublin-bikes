@@ -3,17 +3,18 @@ import json
 from datetime import datetime
 import os
 import sys
-from web.db_utils import (
+from db_utils import (
     availability_rows_from_list,
     station_rows_from_list,
     insert_availabilities,
 )
 
 def get_realtime_data():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    credentials_path = os.path.join(script_dir, 'secure', 'credentials.json')
-
-    f = open(credentials_path)
+    file_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "secure/credentials.json",
+    )
+    f = open(file_path)
     data = json.load(f)
     # real-time data url
     url = "https://api.jcdecaux.com/vls/v3/stations?apiKey={}&contract={}".format(
