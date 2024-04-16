@@ -27,7 +27,7 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
   return new google.maps.places.Autocomplete(inputEl, options);
 }
 
-function initPage() {
+function createDepartureInputEl() {
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   const departureTimeInputEl = document.getElementById('departure-time');
@@ -38,31 +38,44 @@ function initPage() {
   departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
 
   departureTimeInputEl.addEventListener('change', (e) => {
-    const searchButton = document.getElementById("search-button");
+    const searchButton = document.getElementById('search-button');
     const { value } = e.target;
     const valueAsDate = new Date(value);
-    const errorEl = document.getElementById("valid-helper");
+    const errorEl = document.getElementById('valid-helper');
     if (valueAsDate.getHours() < 5) {
-      errorEl.innerText = "Dublin bikes is closed between 12am - 5am";
-      departureTimeInputEl.setAttribute("aria-invalid", true);
-      searchButton.setAttribute("disabled", true);
+      errorEl.innerText = 'Dublin bikes is closed between 12am - 5am';
+      departureTimeInputEl.setAttribute('aria-invalid', true);
+      searchButton.setAttribute('disabled', true);
     } else {
-      departureTimeInputEl.setAttribute("aria-invalid", false);
-      searchButton.removeAttribute("disabled");
-      errorEl.innerText = "";
+      departureTimeInputEl.setAttribute('aria-invalid', false);
+      searchButton.removeAttribute('disabled');
+      errorEl.innerText = '';
     }
   });
 }
 
+function initModals() {
+  const closeErrorModal = document.getElementById('close-error-modal');
+  const errorModalEl = document.getElementById('error-modal');
+  closeErrorModal.addEventListener('click', (e) => {
+    errorModalEl.open = false;
+  });
+}
+
+function initPage() {
+  createDepartureInputEl();
+  initModals();
+}
+
 function renderStation(station, availability, markers, markerBounds, map) {
-  const bikesAvailable = availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable;
-  const standsAvailable = availability.StandsAvailable;
   const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
+  const bikesAvailable = availability?.ElectricBikesAvailable + availability?.MechanicalBikesAvailable;
+  const standsAvailable = availability?.StandsAvailable;
   const marker = new google.maps.Marker({
     position,
     map,
     title: station.Name,
-    label: bikesAvailable.toString(),
+    label: availability == undefined ? '' : bikesAvailable.toString(),
   });
   markers.push(marker);
 
@@ -70,9 +83,9 @@ function renderStation(station, availability, markers, markerBounds, map) {
     '<div class="infowindow-content">' +
     `<div class="header">` +
     `<div>` +
-    `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
-    `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
-    `<span>${standsAvailable} stands</span>` +
+    `<span><i class="fa fa-bicycle"></i> ${availability !== undefined ? availability.MechanicalBikesAvailable : "?"} bikes</span>` +
+    `<span><i class="fa fa-bolt"></i> ${availability !== undefined ? availability.ElectricBikesAvailable : "?"} e-bikes</span>` +
+    `<span>${availability !== undefined ? standsAvailable : "?"} stands</span>` +
     `</div>` +
     `<canvas id="hourly-bike-chart-${station.Id}"></canvas>` +
     `<canvas id="daily-bike-chart-${station.Id}"></canvas>` +
@@ -147,8 +160,7 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
   document.getElementById('search-form').onsubmit = (e) => {
     e.preventDefault();
-    const loaderEl = document.getElementById('loader');
-    loaderEl.style.display = 'block';
+    showSearchLoader();
     const start_place = start_location.getPlace();
     const end_place = end_location.getPlace();
     let departureDateTime = document.getElementById('departure-time').value;
@@ -167,11 +179,26 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
       getRecommendedStationsAndRender(availabilityObj, start_place, end_place, stations, directionsRenderers, directionsService, map);
     } else {
-      getPredictedAvailabilities(departureDateTime).then((a) => {
-        getRecommendedStationsAndRender(a, start_place, end_place, stations, directionsRenderers, directionsService, map);
-      });
+      getPredictedAvailabilities(departureDateTime)
+        .then((res) => {
+          console.log(res)
+          const a = res.json();
+          getRecommendedStationsAndRender(a, start_place, end_place, stations, directionsRenderers, directionsService, map);
+        })
+        .catch((e) => {
+          // Render error modal
+          renderErrorModal(e);
+        });
     }
   };
+}
+
+function renderErrorModal(errorString) {
+  const modal = document.getElementById('error-modal');
+  const modalText = document.getElementById('error-text');
+  modalText.innerText = errorString;
+  modal.open = true;
+  hideSearchLoader();
 }
 
 function getRecommendedStationsAndRender(availabilities, start_place, end_place, stations, directionsRenderers, directionsService, map) {
@@ -223,9 +250,20 @@ async function initMap() {
 
   var markerBounds = new google.maps.LatLngBounds();
   var markers = [];
-  const stations = await getStations();
+  let stations = [];
+  try {
+    stations = await getStations();
+  } catch (error) {
+    renderErrorModal(error);
+    return;
+  }
+  let availabilities = [];
+  try {
+    availabilities = await getAvailabilities();
+  } catch (error) {
+    renderErrorModal(error);
+  }
 
-  const availabilities = await getAvailabilities();
   const availabilityByStation = availabilities.reduce((acc, val) => {
     acc[val.StationId] = val;
     return acc;
@@ -249,7 +287,14 @@ async function initMap() {
 
 async function renderChart(stationId) {
   const t = document.getElementById(`chart-${stationId}`);
-  const data = await getHistoricalAverageAvailabilities(stationId);
+  let data;
+  try {
+    data = await getHistoricalAverageAvailabilities(stationId);
+  } catch (error) {
+    const infoWindowEl = document.getElementById(`station-${stationId}-info`);
+    infoWindowEl.innerText = 'Something went wrong :(';
+    return;
+  }
   const bike_data = data['bikes'];
   const stand_data = data['stands'];
 
@@ -280,7 +325,14 @@ async function renderChart(stationId) {
 }
 
 async function renderCurrentWeather() {
-  const response = await getCurrentWeather(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  let response;
+  try {
+    response = await getCurrentWeather(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  } catch (error) {
+    renderErrorModal(error);
+    return;
+  }
+
   const currentWeather = response['weather'][0];
   const { description, icon } = currentWeather;
   const { temp } = response['main'];
@@ -296,8 +348,12 @@ async function renderCurrentWeather() {
   tempEl.innerText = `${Math.round(temp)}°`;
 
   weatherEl.append(iconEl, tempEl);
-
-  const hourlyForecastResponse = await getHourlyForecast(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  let hourlyForecastResponse;
+  try {
+    hourlyForecastResponse = await getHourlyForecast(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  } catch (e) {
+    return renderErrorModal(e);
+  }
   let today = new Date();
   const dateString = today.toISOString().split('T')[0];
   const todaysForecast = hourlyForecastResponse['list'].filter((f) => f['dt_txt'].includes(dateString));
@@ -474,8 +530,16 @@ const renderRoutes = (start_place, end_place, closest_start_station, closest_end
   resultsEl.style.display = 'block';
   const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
+  hideSearchLoader();
+};
+
+function showSearchLoader() {
+  const loaderEl = document.getElementById('loader');
+  loaderEl.style.display = 'block';
+}
+function hideSearchLoader() {
   const loaderEl = document.getElementById('loader');
   loaderEl.style.display = 'none';
-};
+}
 
 window.initMap = initMap;

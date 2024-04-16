@@ -355,7 +355,7 @@ def get_station(station_id: str):
         if len(rows) > 1:
             raise "Found more than one station with id {}".format(station_id)
         print("Found station: {}".format(rows[0]))
-        return StationRow(rows[0], is_sql=True)
+        return StationRow(rows[0], is_sql=True).values()
 
 
 def get_stations():
@@ -363,7 +363,6 @@ def get_stations():
         stations = []
         stmnt = sqla.select(StationRow.table)
         rows = conn.execute(stmnt)
-
         for row in rows:
             station = StationRow(
                 list(row), is_sql=True
