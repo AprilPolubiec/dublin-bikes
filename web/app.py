@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, make_response
 import db_utils as db_utils
 import os
 import json
@@ -35,6 +35,10 @@ def get_stations():
     except Exception as e:
         return f"failed to get stations: {e}", 500
 
+# TODO
+# @app.errorhandler(404)
+# def not_found(error):
+#     return render_template('error.html'), 404
 
 @app.route("/stations/<int:station_id>")
 def get_station(station_id):
@@ -67,7 +71,6 @@ def get_predicted_availabilities():
         forecast = db_utils.get_weather_forecast(prediction_date)
         print("Retrieved weather forecast: ", forecast)
     except Exception as e:
-        print("Fai: ", e)
         return f"Failed to get weather forecast: {e}", 500
 
     feels_like = forecast["FeelsLike"]
@@ -103,6 +106,7 @@ def get_predicted_availabilities():
     except Exception as e:
         return f"Failed to retrieve stations: ", e
     
+    failed_predictions = []
     for station in stations:
         try:
             pkl_filename = f"model_{station['Id']}.pkl"
@@ -113,7 +117,10 @@ def get_predicted_availabilities():
             res["stands"][station["Id"]] = str(round(prediction[0][0]))
             res["bikes"][station["Id"]] = str(round(prediction[0][1]))
         except Exception as e:
-            return f"Failed to run prediction for station {station['Id']}", 500
+            failed_predictions.append(station['Id'])
+    if len(failed_predictions) > 0:
+        return f"Failed to run prediction for stations {failed_predictions}", 500
+    
     return res, 200
 
 # Utility function
