@@ -117,7 +117,7 @@ def get_predicted_availabilities():
             res["stands"][station["Id"]] = str(round(prediction[0][0]))
             res["bikes"][station["Id"]] = str(round(prediction[0][1]))
         except Exception as e:
-            failed_predictions.append(station['Id'])
+            failed_predictions.append({station['Id']: e})
     if len(failed_predictions) > 0:
         return f"Failed to run prediction for stations {failed_predictions}", 500
     

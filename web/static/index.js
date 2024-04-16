@@ -181,9 +181,7 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
     } else {
       getPredictedAvailabilities(departureDateTime)
         .then((res) => {
-          console.log(res)
-          const a = res.json();
-          getRecommendedStationsAndRender(a, start_place, end_place, stations, directionsRenderers, directionsService, map);
+          getRecommendedStationsAndRender(res, start_place, end_place, stations, directionsRenderers, directionsService, map);
         })
         .catch((e) => {
           // Render error modal
