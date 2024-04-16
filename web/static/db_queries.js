@@ -1,13 +1,26 @@
-export function getStations() {
-  return fetch('/stations').then((d) => d.json());
+export async function getStations() {
+  const response = await fetch('stations');
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }
 
-export function getAvailabilities() {
-  return fetch(`/availability`).then((d) => d.json());
+export async function getAvailabilities() {
+  const response = await fetch('/availability');
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }
 
-export function getCurrentWeather(lat, lon) {
-  return fetch(
+// Uses API to ensure the most up to date
+export async function getCurrentWeather(lat, lon) {
+  const response = await fetch(
     `https://api.openweathermap.org/data/2.5/weather?` +
       new URLSearchParams({
         units: 'metric',
@@ -15,11 +28,17 @@ export function getCurrentWeather(lat, lon) {
         lon,
         appid: '6cc534f5dd39c8f71e2d56c29c35dc71',
       })
-  ).then((d) => d.json());
+  );
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }
 
-export function getHourlyForecast(lat, lon) {
-  return fetch(
+export async function getHourlyForecast(lat, lon) {
+  const response = await fetch(
     `https://pro.openweathermap.org/data/2.5/forecast/hourly?` +
       new URLSearchParams({
         units: 'metric',
@@ -27,17 +46,31 @@ export function getHourlyForecast(lat, lon) {
         lon,
         appid: '6cc534f5dd39c8f71e2d56c29c35dc71',
       })
-  ).then((d) => d.json());
+  );
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }
 
-export function getPredictedAvailability(station_id, date) {
+export async function getPredictedAvailabilities(date) {
   let timestamp = new Date(date).getTime() / 1000;
-  return fetch(`/predicted-availability/${station_id}` + new URLSearchParams({ date_timestamp: timestamp })).then((d) => d.json());
+  const response = await fetch(`/predicted-availabilities?` + new URLSearchParams({ date_timestamp: timestamp }));
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }
-export function getPredictedAvailabilities(date) {
-  let timestamp = new Date(date).getTime() / 1000;
-  return fetch(`/predicted-availabilities?` + new URLSearchParams({ date_timestamp: timestamp })).then((d) => d.json());
-}
-export function getHistoricalAverageAvailabilities(stationId) {
-  return fetch(`/historical-availability/${stationId}`).then((d) => d.json());
+export async function getHistoricalAverageAvailabilities(stationId) {
+  const response = await fetch(`/historical-availability/${stationId}`);
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 }

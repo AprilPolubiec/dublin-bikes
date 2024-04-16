@@ -4,7 +4,6 @@ const DUBLIN_LATITUDE = 53.3498;
 const DUBLIN_LONGITUDE = 6.2603;
 
 // TODO: can't take bikes from 12-5
-// TODO: alert that 0 are found and will look for the next closest
 
 // Inserts a google maps Autocomplete in the element with the given elId
 function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
@@ -28,7 +27,7 @@ function addDestinationAutocompleteInputs(dublinCoordinates, elId) {
   return new google.maps.places.Autocomplete(inputEl, options);
 }
 
-function initPage() {
+function createDepartureInputEl() {
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   const departureTimeInputEl = document.getElementById('departure-time');
@@ -37,12 +36,41 @@ function initPage() {
   var maxDate = new Date(now);
   maxDate.setDate(now.getDate() + 4);
   departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
+
+  departureTimeInputEl.addEventListener('change', (e) => {
+    const searchButton = document.getElementById('search-button');
+    const { value } = e.target;
+    const valueAsDate = new Date(value);
+    const errorEl = document.getElementById('valid-helper');
+    if (valueAsDate.getHours() < 5) {
+      errorEl.innerText = 'Dublin bikes is closed between 12am - 5am';
+      departureTimeInputEl.setAttribute('aria-invalid', true);
+      searchButton.setAttribute('disabled', true);
+    } else {
+      departureTimeInputEl.setAttribute('aria-invalid', false);
+      searchButton.removeAttribute('disabled');
+      errorEl.innerText = '';
+    }
+  });
+}
+
+function initModals() {
+  const closeErrorModal = document.getElementById('close-error-modal');
+  const errorModalEl = document.getElementById('error-modal');
+  closeErrorModal.addEventListener('click', (e) => {
+    errorModalEl.open = false;
+  });
+}
+
+function initPage() {
+  createDepartureInputEl();
+  initModals();
 }
 
 function renderStation(station, availability, markers, markerBounds, map) {
-  const bikesAvailable = availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable;
-  const standsAvailable = availability.StandsAvailable;
   const position = new google.maps.LatLng(parseFloat(station.PositionLatitude), parseFloat(station.PositionLongitude));
+  const bikesAvailable = availability?.ElectricBikesAvailable + availability?.MechanicalBikesAvailable;
+  const standsAvailable = availability?.StandsAvailable;
   const marker = new google.maps.Marker({
     position,
     map,
@@ -59,9 +87,9 @@ function renderStation(station, availability, markers, markerBounds, map) {
     '<div class="infowindow-content">' +
     `<div class="header">` +
     `<div>` +
-    `<span><i class="fa fa-bicycle"></i> ${availability.MechanicalBikesAvailable} bikes</span>` +
-    `<span><i class="fa fa-bolt"></i> ${availability.ElectricBikesAvailable} e-bikes</span>` +
-    `<span>${standsAvailable} stands</span>` +
+    `<span><i class="fa fa-bicycle"></i> ${availability !== undefined ? availability.MechanicalBikesAvailable : "?"} bikes</span>` +
+    `<span><i class="fa fa-bolt"></i> ${availability !== undefined ? availability.ElectricBikesAvailable : "?"} e-bikes</span>` +
+    `<span>${availability !== undefined ? standsAvailable : "?"} stands</span>` +
     `</div>` +
     `<canvas id="hourly-bike-chart-${station.Id}"></canvas>` +
     `<canvas id="daily-bike-chart-${station.Id}"></canvas>` +
@@ -136,6 +164,7 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
   document.getElementById('search-form').onsubmit = (e) => {
     e.preventDefault();
+    showSearchLoader();
     const start_place = start_location.getPlace();
     const end_place = end_location.getPlace();
     let departureDateTime = document.getElementById('departure-time').value;
@@ -154,11 +183,24 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
       getRecommendedStationsAndRender(availabilityObj, start_place, end_place, stations, directionsRenderers, directionsService, map);
     } else {
-      getPredictedAvailabilities(departureDateTime).then((a) => {
-        getRecommendedStationsAndRender(a, start_place, end_place, stations, directionsRenderers, directionsService, map);
-      });
+      getPredictedAvailabilities(departureDateTime)
+        .then((res) => {
+          getRecommendedStationsAndRender(res, start_place, end_place, stations, directionsRenderers, directionsService, map);
+        })
+        .catch((e) => {
+          // Render error modal
+          renderErrorModal(e);
+        });
     }
   };
+}
+
+function renderErrorModal(errorString) {
+  const modal = document.getElementById('error-modal');
+  const modalText = document.getElementById('error-text');
+  modalText.innerText = errorString;
+  modal.open = true;
+  hideSearchLoader();
 }
 
 function getRecommendedStationsAndRender(availabilities, start_place, end_place, stations, directionsRenderers, directionsService, map) {
@@ -205,14 +247,25 @@ async function initMap() {
   const map = new google.maps.Map(document.getElementById('map'), {
     zoom: 6,
     center: dublinCoordinates,
+    mapId: '2b6cc70d33cd984e',
   });
 
   var markerBounds = new google.maps.LatLngBounds();
   var markers = [];
-  const stations = await getStations();
+  let stations = [];
+  try {
+    stations = await getStations();
+  } catch (error) {
+    renderErrorModal(error);
+    return;
+  }
+  let availabilities = [];
+  try {
+    availabilities = await getAvailabilities();
+  } catch (error) {
+    renderErrorModal(error);
+  }
 
-  const availabilities = await getAvailabilities();
-  console.log(availabilities);
   const availabilityByStation = availabilities.reduce((acc, val) => {
     acc[val.StationId] = val;
     return acc;
@@ -236,7 +289,14 @@ async function initMap() {
 
 async function renderChart(stationId) {
   const t = document.getElementById(`chart-${stationId}`);
-  const data = await getHistoricalAverageAvailabilities(stationId);
+  let data;
+  try {
+    data = await getHistoricalAverageAvailabilities(stationId);
+  } catch (error) {
+    const infoWindowEl = document.getElementById(`station-${stationId}-info`);
+    infoWindowEl.innerText = 'Something went wrong :(';
+    return;
+  }
   const bike_data = data['bikes'];
   const stand_data = data['stands'];
 
@@ -247,7 +307,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by day',
-          data: Object.values(bike_data.days),
+          data: Object.values(bike_data.days).map((d) => Math.floor(d)),
         },
       ],
     },
@@ -259,7 +319,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by hour',
-          data: Object.values(bike_data.hours),
+          data: Object.values(bike_data.hours).map((d) => Math.floor(d)),
         },
       ],
     },
@@ -267,7 +327,14 @@ async function renderChart(stationId) {
 }
 
 async function renderCurrentWeather() {
-  const response = await getCurrentWeather(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  let response;
+  try {
+    response = await getCurrentWeather(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  } catch (error) {
+    renderErrorModal(error);
+    return;
+  }
+
   const currentWeather = response['weather'][0];
   const { description, icon } = currentWeather;
   const { temp } = response['main'];
@@ -283,8 +350,12 @@ async function renderCurrentWeather() {
   tempEl.innerText = `${Math.round(temp)}°`;
 
   weatherEl.append(iconEl, tempEl);
-
-  const hourlyForecastResponse = await getHourlyForecast(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  let hourlyForecastResponse;
+  try {
+    hourlyForecastResponse = await getHourlyForecast(DUBLIN_LATITUDE, DUBLIN_LONGITUDE * -1);
+  } catch (e) {
+    return renderErrorModal(e);
+  }
   let today = new Date();
   const dateString = today.toISOString().split('T')[0];
   const todaysForecast = hourlyForecastResponse['list'].filter((f) => f['dt_txt'].includes(dateString));
@@ -346,7 +417,6 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
 
   const closestStationId = predictionsByDistance.filter(([k, v]) => v != 0)[0][0];
   const closestStation = stations.filter((s) => s.Id == closestStationId)[0];
-  console.log('Sorted stations: ', predictionsByDistance);
 
   if (predictionsByDistance[0][1] == 0) {
     if (includeUnavailable == true) {
@@ -364,7 +434,7 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
 const renderRoutes = (start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map) => {
   // Get walking directions from start location to the start station
   const isSameStation = closest_start_station.lng === closest_end_station.lng && closest_start_station.lat === closest_end_station.lat;
-  
+
   if (!isSameStation) {
     const firstLegRenderer = directionsRenderers[0];
     firstLegRenderer.setMap(map);
@@ -462,6 +532,16 @@ const renderRoutes = (start_place, end_place, closest_start_station, closest_end
   resultsEl.style.display = 'block';
   const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
+  hideSearchLoader();
 };
+
+function showSearchLoader() {
+  const loaderEl = document.getElementById('loader');
+  loaderEl.style.display = 'block';
+}
+function hideSearchLoader() {
+  const loaderEl = document.getElementById('loader');
+  loaderEl.style.display = 'none';
+}
 
 window.initMap = initMap;

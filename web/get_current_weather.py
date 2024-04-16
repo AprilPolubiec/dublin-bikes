@@ -4,15 +4,17 @@ import json
 import datetime
 import sys
 import os
-from web.db_utils import CurrentWeatherRow, insert_row
+from db_utils import CurrentWeatherRow, insert_row
 
 latitude = 53.3498
 longitude = -6.2672
 W_C_URI = "https://api.openweathermap.org/data/2.5/weather"
 # Load API key from credentials file
-script_dir = os.path.dirname(os.path.abspath(__file__))
-credentials_path = os.path.join(script_dir, 'secure', 'credentials.json')
-with open(credentials_path) as f:
+file_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "secure/credentials.json",
+)
+with open(file_path) as f:
     data = json.load(f)
     W_API = data["W_API"]
 # Make the API request

@@ -5,7 +5,7 @@ import csv
 import os
 import sys
 import datetime
-from .utils import group_by, clean_type
+from utils import group_by, clean_type
 
 import logging
 
@@ -27,7 +27,7 @@ if DEV:
 else:
     URI = "dublin-bikes-db.cnyo8auy4q4b.us-east-1.rds.amazonaws.com"  # TODO: add dev env variables
 
-PORT = 3307
+PORT = 3306
 DB = "dublin-bikes"
 USER = "admin"
 
@@ -355,7 +355,7 @@ def get_station(station_id: str):
         if len(rows) > 1:
             raise "Found more than one station with id {}".format(station_id)
         print("Found station: {}".format(rows[0]))
-        return StationRow(rows[0], is_sql=True)
+        return StationRow(rows[0], is_sql=True).values()
 
 
 def get_stations():
@@ -363,7 +363,6 @@ def get_stations():
         stations = []
         stmnt = sqla.select(StationRow.table)
         rows = conn.execute(stmnt)
-
         for row in rows:
             station = StationRow(
                 list(row), is_sql=True

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Marker</title>
+    <title>Dublin Bikes App</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
@@ -10,7 +10,6 @@
   </head>
   <body>
     <main class="container-fluid">
-      <!-- TODO: make smaller -->
       <nav>
         <ul>
           <li><strong>Bike Finder</strong></li>
@@ -30,9 +29,11 @@
                 <label for="departure-time"
                   >Departure Time:
                   <input type="datetime-local" id="departure-time" name="departure-time" required />
+                  <small id="valid-helper"></small>
                 </label>
               </fieldset>
-              <button type="submit">Search</button>
+              <button type="submit" id="search-button">Search</button>
+              <span id="loader" aria-busy="true" style="display: none;">Generating routes...</span>
             </form>
           </div>
 
@@ -53,6 +54,14 @@
               </footer>
             </article>
           </dialog>
+  
+          <dialog id="error-modal">
+            <article>
+              <button aria-label="Close" rel="prev" id="close-error-modal"></button>
+              <h2>Something went wrong!</h2>
+              <p id="error-text"></p>
+            </article>
+          </dialog>
 
           <div id="results">
             <i id="back-button" class="fa fa-chevron-left"></i>
@@ -69,10 +78,6 @@
                 <summary id="leg3-title"></summary>
                 <div id="leg3Panel"></div>
               </details>
-
-            <!-- <span aria-busy="true">Generating your link...</span>
-              <progress></progress> -->
-            <!-- TODO modals https://picocss.com/docs/modal -->
           </div>
         </div>
         <div class="container right" id="map"></div>
