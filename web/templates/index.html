@@ -10,7 +10,6 @@
   </head>
   <body>
     <main class="container-fluid">
-      <!-- TODO: make smaller -->
       <nav>
         <ul>
           <li><strong>Bike Finder</strong></li>
@@ -30,9 +29,10 @@
                 <label for="departure-time"
                   >Departure Time:
                   <input type="datetime-local" id="departure-time" name="departure-time" required />
+                  <small id="valid-helper"></small>
                 </label>
               </fieldset>
-              <button type="submit">Search</button>
+              <button type="submit" id="search-button">Search</button>
               <span id="loader" aria-busy="true" style="display: none;">Generating routes...</span>
             </form>
           </div>
@@ -70,10 +70,6 @@
                 <summary id="leg3-title"></summary>
                 <div id="leg3Panel"></div>
               </details>
-
-            <!-- <span aria-busy="true">Generating your link...</span>
-              <progress></progress> -->
-            <!-- TODO modals https://picocss.com/docs/modal -->
           </div>
         </div>
         <div class="container right" id="map"></div>
