@@ -36,6 +36,22 @@ function initPage() {
   var maxDate = new Date(now);
   maxDate.setDate(now.getDate() + 4);
   departureTimeInputEl.max = maxDate.toISOString().slice(0, 16);
+
+  departureTimeInputEl.addEventListener('change', (e) => {
+    const searchButton = document.getElementById("search-button");
+    const { value } = e.target;
+    const valueAsDate = new Date(value);
+    const errorEl = document.getElementById("valid-helper");
+    if (valueAsDate.getHours() < 5) {
+      errorEl.innerText = "Dublin bikes is closed between 12am - 5am";
+      departureTimeInputEl.setAttribute("aria-invalid", true);
+      searchButton.setAttribute("disabled", true);
+    } else {
+      departureTimeInputEl.setAttribute("aria-invalid", false);
+      searchButton.removeAttribute("disabled");
+      errorEl.innerText = "";
+    }
+  });
 }
 
 function renderStation(station, availability, markers, markerBounds, map) {
@@ -131,8 +147,8 @@ function createInputForm(markers, directionsRenderers, availabilities, stations,
 
   document.getElementById('search-form').onsubmit = (e) => {
     e.preventDefault();
-    const loaderEl = document.getElementById("loader");
-    loaderEl.style.display = "block";
+    const loaderEl = document.getElementById('loader');
+    loaderEl.style.display = 'block';
     const start_place = start_location.getPlace();
     const end_place = end_location.getPlace();
     let departureDateTime = document.getElementById('departure-time').value;
@@ -210,7 +226,6 @@ async function initMap() {
   const stations = await getStations();
 
   const availabilities = await getAvailabilities();
-  console.log(availabilities);
   const availabilityByStation = availabilities.reduce((acc, val) => {
     acc[val.StationId] = val;
     return acc;
@@ -245,7 +260,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by day',
-          data: Object.values(bike_data.days).map(d => Math.floor(d)),
+          data: Object.values(bike_data.days).map((d) => Math.floor(d)),
         },
       ],
     },
@@ -257,7 +272,7 @@ async function renderChart(stationId) {
       datasets: [
         {
           label: 'Bikes by hour',
-          data: Object.values(bike_data.hours).map(d => Math.floor(d)),
+          data: Object.values(bike_data.hours).map((d) => Math.floor(d)),
         },
       ],
     },
@@ -344,7 +359,6 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
 
   const closestStationId = predictionsByDistance.filter(([k, v]) => v != 0)[0][0];
   const closestStation = stations.filter((s) => s.Id == closestStationId)[0];
-  console.log('Sorted stations: ', predictionsByDistance);
 
   if (predictionsByDistance[0][1] == 0) {
     if (includeUnavailable == true) {
@@ -362,7 +376,7 @@ function getRecommendedStation(placeGeometry, availabilities, stations, availabi
 const renderRoutes = (start_place, end_place, closest_start_station, closest_end_station, directionsRenderers, directionsService, map) => {
   // Get walking directions from start location to the start station
   const isSameStation = closest_start_station.lng === closest_end_station.lng && closest_start_station.lat === closest_end_station.lat;
-  
+
   if (!isSameStation) {
     const firstLegRenderer = directionsRenderers[0];
     firstLegRenderer.setMap(map);
@@ -460,8 +474,8 @@ const renderRoutes = (start_place, end_place, closest_start_station, closest_end
   resultsEl.style.display = 'block';
   const formEl = document.getElementById('search-form');
   formEl.style.display = 'none';
-  const loaderEl = document.getElementById("loader");
-  loaderEl.style.display = "none";
+  const loaderEl = document.getElementById('loader');
+  loaderEl.style.display = 'none';
 };
 
 window.initMap = initMap;
