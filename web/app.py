@@ -5,6 +5,7 @@ import json
 import pickle
 import datetime
 
+
 # from prediction import predict_bike_availability
 
 app = Flask(__name__)

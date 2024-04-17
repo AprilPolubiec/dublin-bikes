@@ -77,7 +77,7 @@ function renderStation(station, availability, markers, markerBounds, map) {
     title: station.Name,
     label: (availability.ElectricBikesAvailable + availability.MechanicalBikesAvailable).toString(),
     icon: {
-      url: '/static/pngimg.png',
+      url: '/static/marker.png',
       scaledSize: new google.maps.Size(32, 32) 
     }
   });
