@@ -1,5 +1,25 @@
 # Dublin Bikes
 
+## File Structure
+
+/data
+- contains sample data to be used in place of API or DB queries
+
+/models
+- /stands-and-bikes
+  - pkl files for the currently used model which predicts stands and bikes available
+- /stands-available
+  - pkl files for a previous model predicting stands available
+
+/scripts
+- scripts that were used for DB creation - mostly for record-keeping
+
+/tests
+- files for testing code
+
+/web
+- all web app code including API scraping scripts
+
 ## Running locally
 In your command line, run
 
